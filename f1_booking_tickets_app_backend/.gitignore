@@ -1,0 +1,23 @@
+# Build artifacts
+bin/
+obj/
+*.dll
+*.exe
+
+# Visual Studio
+.vs/
+
+# NuGet
+*.nupkg
+
+# Entity Framework
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+
+# Environment
+.env
+appsettings.local.json
