@@ -18,6 +18,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\f1_booking_tickets.DataAccess\f1_booking_tickets.DataAccess.csproj" />
+    <ProjectReference Include="..\f1_booking_tickets.Domain\f1_booking_tickets.Domain.csproj" />
+    <ProjectReference Include="..\f1_booking_tickets.Services\f1_booking_tickets.Services.csproj" />
+    <ProjectReference Include="..\f1_booking_tickets.Services.If\f1_booking_tickets.Services.If.csproj" />
   </ItemGroup>
 
 </Project>

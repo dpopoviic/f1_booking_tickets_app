@@ -2,22 +2,18 @@ using f1_booking_tickets.DataAccess;
 using f1_booking_tickets.Domain.Entities;
 using f1_booking_tickets.Services.If;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using System.Text.Json;
 
 namespace f1_booking_tickets.Services
 {
     public class CurrencyService : ICurrencyService
     {
         private readonly Context _context;
-        private readonly HttpClient _httpClient;
-        private readonly string _kursApiBaseUrl;
+        private readonly IKursAPIClient _kursAPIClient;
 
-        public CurrencyService(Context context, IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        public CurrencyService(Context context, IKursAPIClient kursAPIClient)
         {
             _context = context;
-            _httpClient = httpClientFactory.CreateClient();
-            _kursApiBaseUrl = configuration["KursAPI:BaseUrl"] ?? "https://kurs.resenje.org/api/v1/currencies/";
+            _kursAPIClient = kursAPIClient;
         }
 
         public async Task<IReadOnlyCollection<Currency>> GetSupportedAsync(CancellationToken cancellationToken = default)
@@ -41,24 +37,17 @@ namespace f1_booking_tickets.Services
 
             try
             {
-                var url = $"{_kursApiBaseUrl}{fromCurrencyCode}/kurs/{toCurrencyCode}";
-                var response = await _httpClient.GetAsync(url, cancellationToken);
-                response.EnsureSuccessStatusCode();
+                var rateResponse = await _kursAPIClient.GetKursRateAsync(fromCurrencyCode, toCurrencyCode, cancellationToken);
+                
+                if (rateResponse != null)
+                    return rateResponse.ExchangeMiddleRate;
 
-                var json = await response.Content.ReadAsStringAsync(cancellationToken);
-                var result = JsonSerializer.Deserialize<KursApiResponse>(json);
-
-                return result?.ExchangeMiddleRate ?? 1m;
+                return 1m;
             }
             catch
             {
                 return 1m;
             }
-        }
-
-        private class KursApiResponse
-        {
-            public decimal ExchangeMiddleRate { get; set; }
         }
     }
 }
