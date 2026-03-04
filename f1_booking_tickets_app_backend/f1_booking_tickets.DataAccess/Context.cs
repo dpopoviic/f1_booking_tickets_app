@@ -20,7 +20,6 @@ namespace f1_booking_tickets.DataAccess
         {
             base.OnModelCreating(modelBuilder);
 
-            // ==================== RACE CONFIGURATION ====================
             modelBuilder.Entity<Race>(entity =>
             {
                 entity.HasKey(e => e.RaceId);
@@ -58,7 +57,6 @@ namespace f1_booking_tickets.DataAccess
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // ==================== RACE DAY CONFIGURATION ====================
             modelBuilder.Entity<RaceDay>(entity =>
             {
                 entity.HasKey(e => e.RaceDayId);
@@ -101,7 +99,6 @@ namespace f1_booking_tickets.DataAccess
                 entity.HasIndex(e => e.Date);
             });
 
-            // ==================== SEATING ZONE CONFIGURATION ====================
             modelBuilder.Entity<SeatingZone>(entity =>
             {
                 entity.HasKey(e => e.ZoneId);
@@ -133,7 +130,6 @@ namespace f1_booking_tickets.DataAccess
                 entity.HasIndex(e => e.RaceId);
             });
 
-            // ==================== TICKET CONFIGURATION ====================
             modelBuilder.Entity<Ticket>(entity =>
             {
                 entity.HasKey(e => e.TicketId);
@@ -202,12 +198,12 @@ namespace f1_booking_tickets.DataAccess
                 entity.HasOne(e => e.UsedPromoCode)
                     .WithOne(pc => pc.UsedByTicket)
                     .HasForeignKey<Ticket>(e => e.UsedPromoCodeId)
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(e => e.CreatedPromoCode)
                     .WithOne(pc => pc.CreatedByTicket)
                     .HasForeignKey<PromoCode>(pc => pc.CreatedByTicketId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasMany(e => e.TicketRaceDays)
                     .WithOne(trd => trd.Ticket)
@@ -217,7 +213,6 @@ namespace f1_booking_tickets.DataAccess
                 entity.HasIndex(e => e.CurrencyId);
             });
 
-            // ==================== PROMO CODE CONFIGURATION ====================
             modelBuilder.Entity<PromoCode>(entity =>
             {
                 entity.HasKey(e => e.PromoCodeId);
@@ -247,7 +242,6 @@ namespace f1_booking_tickets.DataAccess
                 entity.HasIndex(e => e.UsedByTicketId);
             });
 
-            // ==================== TICKET RACE DAY CONFIGURATION ====================
             modelBuilder.Entity<TicketRaceDay>(entity =>
             {
                 entity.HasKey(e => new { e.TicketId, e.RaceDayId });
@@ -279,7 +273,6 @@ namespace f1_booking_tickets.DataAccess
                 entity.HasIndex(e => e.ZoneId);
             });
 
-            // ==================== CURRENCY CONFIGURATION ====================
             modelBuilder.Entity<Currency>(entity =>
             {
                 entity.HasKey(e => e.CurrencyId);
