@@ -1,12 +1,5 @@
 ﻿using f1_booking_tickets.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace f1_booking_tickets.DataAccess
 {
@@ -18,15 +11,16 @@ namespace f1_booking_tickets.DataAccess
         public DbSet<Race> Races { get; set; }
         public DbSet<RaceDay> RaceDays { get; set; }
         public DbSet<SeatingZone> SeatingZones { get; set; }
-        public DbSet<Customer> Customers { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<TicketRaceDay> TicketRaceDays { get; set; }
         public DbSet<PromoCode> PromoCodes { get; set; }
         public DbSet<Currency> Currencies { get; set; }
+        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
+            // ==================== RACE CONFIGURATION ====================
             modelBuilder.Entity<Race>(entity =>
             {
                 entity.HasKey(e => e.RaceId);
@@ -42,6 +36,8 @@ namespace f1_booking_tickets.DataAccess
                 entity.Property(e => e.BasePrice)
                     .HasPrecision(18, 2)
                     .IsRequired();
+
+                entity.Property(e => e.DiscountDeadline);
 
                 entity.Property(e => e.CreatedAt)
                     .HasDefaultValueSql("GETUTCDATE()")
@@ -62,6 +58,7 @@ namespace f1_booking_tickets.DataAccess
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
+            // ==================== RACE DAY CONFIGURATION ====================
             modelBuilder.Entity<RaceDay>(entity =>
             {
                 entity.HasKey(e => e.RaceDayId);
@@ -104,6 +101,7 @@ namespace f1_booking_tickets.DataAccess
                 entity.HasIndex(e => e.Date);
             });
 
+            // ==================== SEATING ZONE CONFIGURATION ====================
             modelBuilder.Entity<SeatingZone>(entity =>
             {
                 entity.HasKey(e => e.ZoneId);
@@ -135,9 +133,14 @@ namespace f1_booking_tickets.DataAccess
                 entity.HasIndex(e => e.RaceId);
             });
 
-            modelBuilder.Entity<Customer>(entity =>
+            // ==================== TICKET CONFIGURATION ====================
+            modelBuilder.Entity<Ticket>(entity =>
             {
-                entity.HasKey(e => e.CustomerId);
+                entity.HasKey(e => e.TicketId);
+
+                entity.Property(e => e.TicketCode)
+                    .IsRequired()
+                    .HasMaxLength(50);
 
                 entity.Property(e => e.FirstName)
                     .IsRequired()
@@ -148,10 +151,6 @@ namespace f1_booking_tickets.DataAccess
                     .HasMaxLength(100);
 
                 entity.Property(e => e.Email)
-                    .IsRequired()
-                    .HasMaxLength(256);
-
-                entity.Property(e => e.Password)
                     .IsRequired()
                     .HasMaxLength(256);
 
@@ -166,53 +165,6 @@ namespace f1_booking_tickets.DataAccess
                 entity.Property(e => e.Country)
                     .IsRequired()
                     .HasMaxLength(100);
-
-                entity.Property(e => e.CreatedAt)
-                    .HasDefaultValueSql("GETUTCDATE()")
-                    .ValueGeneratedOnAdd();
-
-                entity.Property(e => e.UpdatedAt)
-                    .HasDefaultValueSql("GETUTCDATE()")
-                    .ValueGeneratedOnAddOrUpdate();
-
-                entity.HasIndex(e => e.Email)
-                    .IsUnique();
-
-                entity.HasMany(e => e.Tickets)
-                    .WithOne(t => t.Customer)
-                    .HasForeignKey(t => t.CustomerId)
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
-
-            modelBuilder.Entity<PromoCode>(entity =>
-            {
-                entity.HasKey(e => e.PromoCodeId);
-
-                entity.Property(e => e.Code)
-                    .IsRequired()
-                    .HasMaxLength(50);
-
-                entity.Property(e => e.DiscountPercentage)
-                    .HasPrecision(18, 2)
-                    .IsRequired();
-
-                entity.Property(e => e.ExpiryDate);
-
-                entity.Property(e => e.Status)
-                    .IsRequired()
-                    .HasConversion<string>();
-
-                entity.Property(e => e.CreatedAt)
-                    .HasDefaultValueSql("GETUTCDATE()")
-                    .ValueGeneratedOnAdd();
-
-                entity.HasIndex(e => e.Code)
-                    .IsUnique();
-            });
-
-            modelBuilder.Entity<Ticket>(entity =>
-            {
-                entity.HasKey(e => e.TicketId);
 
                 entity.Property(e => e.IsActive)
                     .IsRequired()
@@ -237,35 +189,65 @@ namespace f1_booking_tickets.DataAccess
                     .HasDefaultValueSql("GETUTCDATE()")
                     .ValueGeneratedOnAddOrUpdate();
 
-                entity.HasOne(e => e.Customer)
-                    .WithMany(c => c.Tickets)
-                    .HasForeignKey(e => e.CustomerId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasIndex(e => e.TicketCode)
+                    .IsUnique();
+
+                entity.HasIndex(e => e.Email);
 
                 entity.HasOne(e => e.Currency)
                     .WithMany()
                     .HasForeignKey(e => e.CurrencyId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(e => e.PromoCodeCreated)
-                    .WithOne(t => t.CreatedTicket)
-                    .HasForeignKey<Ticket>(e => e.PromoCodeCreatedId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.UsedPromoCode)
+                    .WithOne(pc => pc.UsedByTicket)
+                    .HasForeignKey<Ticket>(e => e.UsedPromoCodeId)
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                entity.HasOne(e => e.PromoCodeUsed)
-                   .WithOne(t => t.UsedTicket)
-                   .HasForeignKey<Ticket>(e => e.PromoCodeUsedId)
-                   .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.CreatedPromoCode)
+                    .WithOne(pc => pc.CreatedByTicket)
+                    .HasForeignKey<PromoCode>(pc => pc.CreatedByTicketId)
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasMany(e => e.TicketRaceDays)
                     .WithOne(trd => trd.Ticket)
                     .HasForeignKey(trd => trd.TicketId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasIndex(e => e.CustomerId);
                 entity.HasIndex(e => e.CurrencyId);
             });
 
+            // ==================== PROMO CODE CONFIGURATION ====================
+            modelBuilder.Entity<PromoCode>(entity =>
+            {
+                entity.HasKey(e => e.PromoCodeId);
+
+                entity.Property(e => e.Code)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.DiscountPercentage)
+                    .HasPrecision(18, 2)
+                    .IsRequired();
+
+                entity.Property(e => e.ExpiryDate);
+
+                entity.Property(e => e.Status)
+                    .IsRequired()
+                    .HasConversion<string>();
+
+                entity.Property(e => e.CreatedAt)
+                    .HasDefaultValueSql("GETUTCDATE()")
+                    .ValueGeneratedOnAdd();
+
+                entity.HasIndex(e => e.Code)
+                    .IsUnique();
+
+                entity.HasIndex(e => e.CreatedByTicketId);
+                entity.HasIndex(e => e.UsedByTicketId);
+            });
+
+            // ==================== TICKET RACE DAY CONFIGURATION ====================
             modelBuilder.Entity<TicketRaceDay>(entity =>
             {
                 entity.HasKey(e => new { e.TicketId, e.RaceDayId });
@@ -297,6 +279,7 @@ namespace f1_booking_tickets.DataAccess
                 entity.HasIndex(e => e.ZoneId);
             });
 
+            // ==================== CURRENCY CONFIGURATION ====================
             modelBuilder.Entity<Currency>(entity =>
             {
                 entity.HasKey(e => e.CurrencyId);
@@ -307,7 +290,7 @@ namespace f1_booking_tickets.DataAccess
 
                 entity.Property(e => e.Code)
                     .IsRequired()
-                    .HasMaxLength(3); 
+                    .HasMaxLength(3);
 
                 entity.HasIndex(e => e.Code)
                     .IsUnique();

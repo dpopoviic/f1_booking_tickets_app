@@ -12,6 +12,7 @@ namespace f1_booking_tickets.Domain.Entities
         public string Name { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;
         public decimal BasePrice { get; set; }
+        public DateTime? DiscountDeadline { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public ICollection<RaceDay> RaceDays { get; set; } = new List<RaceDay>();

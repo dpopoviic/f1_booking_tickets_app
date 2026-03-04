@@ -15,9 +15,10 @@ namespace f1_booking_tickets.Domain.Entities
         public DateTime? ExpiryDate { get; set; }
         public PromoCodeStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
-        public Ticket CreatedTicket { get; set; } = null!;
-        public Ticket? UsedTicket { get; set; }
-
+        public int CreatedByTicketId { get; set; }
+        public Ticket CreatedByTicket { get; set; } = null!;
+        public int? UsedByTicketId { get; set; }
+        public Ticket? UsedByTicket { get; set; }
     }
 
     public enum PromoCodeStatus
