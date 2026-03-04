@@ -9,7 +9,7 @@ namespace f1_booking_tickets.Domain.Entities
 {
     public class PromoCode
     {
-        public int PromoCodId { get; set; }
+        public int PromoCodeId { get; set; }
         public string Code { get; set; } = string.Empty;
         public decimal DiscountPercentage { get; set; }
         public DateTime? ExpiryDate { get; set; }
