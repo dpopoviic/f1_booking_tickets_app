@@ -3,7 +3,7 @@ import FormulaLogo from './icons/FormulaLogo'
 
 export default function Footer() {
   return (
-    <footer className="border-t bg-dark-extreme border-accent-sage px-4 pb-14 pt-10 text-accent-sage">
+    <footer className="border-t bg-dark-extreme border-accent-sage/30 px-4 pb-14 pt-10 text-accent-sage">
       <div className="mx-auto w-full max-w-7xl px-4 flex h-16 items-center justify-between gap-4">
         <Link
           to="/"
@@ -12,7 +12,7 @@ export default function Footer() {
           <FormulaLogo width={30} height={30} />
           TICKETS
         </Link>
-        <div className="mt-4 flex justify-center gap-4">
+        <div className="flex justify-center gap-4">
           <a
             href="https://www.instagram.com/f1/"
             target="_blank"
