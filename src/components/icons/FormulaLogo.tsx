@@ -1,8 +1,14 @@
-export default function FormulaLogo() {
+export default function FormulaLogo({
+  width = 40,
+  height = 40,
+}: {
+  width?: number
+  height?: number
+}) {
   return (
     <svg
-      width="40"
-      height="40"
+      width={width}
+      height={height}
       viewBox="-4.8 -4.8 57.60 57.60"
       xmlns="http://www.w3.org/2000/svg"
       fill=""
