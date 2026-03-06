@@ -6,7 +6,7 @@ import ReportsSvg from './icons/ReportsSvg'
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-50 border-b border-accent-sage bg-dark-extreme backdrop-blur-lg">
+    <header className="sticky top-0 z-50 border-b border-accent-sage/30 bg-dark-extreme backdrop-blur-lg">
       <nav className="mx-auto w-full max-w-7xl px-4 flex h-16 items-center justify-between gap-4">
         <Link
           to="/"
