@@ -1,4 +1,4 @@
-export default function ResultsSvg() {
+export default function ReportsSvg() {
   return (
     <svg
       width="20px"
