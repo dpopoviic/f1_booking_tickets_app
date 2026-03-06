@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-accent-red: #ff3b30;
+  --color-dark-extreme: #0a0a0a;
+  --color-dark-surface: #121212;
+  --color-accent-sage: #9299a4;
+}
+
+:root {
+  --font-sans: 'Barlow Condensed', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+}
