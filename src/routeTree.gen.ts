@@ -11,7 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TicketIndexRouteImport } from './routes/ticket/index'
-import { Route as ResultsIndexRouteImport } from './routes/results/index'
+import { Route as ReportsIndexRouteImport } from './routes/reports/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 
 const IndexRoute = IndexRouteImport.update({
@@ -24,9 +24,9 @@ const TicketIndexRoute = TicketIndexRouteImport.update({
   path: '/ticket/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResultsIndexRoute = ResultsIndexRouteImport.update({
-  id: '/results/',
-  path: '/results/',
+const ReportsIndexRoute = ReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -38,34 +38,34 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin/': typeof AdminIndexRoute
-  '/results/': typeof ResultsIndexRoute
+  '/reports/': typeof ReportsIndexRoute
   '/ticket/': typeof TicketIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminIndexRoute
-  '/results': typeof ResultsIndexRoute
+  '/reports': typeof ReportsIndexRoute
   '/ticket': typeof TicketIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin/': typeof AdminIndexRoute
-  '/results/': typeof ResultsIndexRoute
+  '/reports/': typeof ReportsIndexRoute
   '/ticket/': typeof TicketIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin/' | '/results/' | '/ticket/'
+  fullPaths: '/' | '/admin/' | '/reports/' | '/ticket/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/results' | '/ticket'
-  id: '__root__' | '/' | '/admin/' | '/results/' | '/ticket/'
+  to: '/' | '/admin' | '/reports' | '/ticket'
+  id: '__root__' | '/' | '/admin/' | '/reports/' | '/ticket/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminIndexRoute: typeof AdminIndexRoute
-  ResultsIndexRoute: typeof ResultsIndexRoute
+  ReportsIndexRoute: typeof ReportsIndexRoute
   TicketIndexRoute: typeof TicketIndexRoute
 }
 
@@ -85,11 +85,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TicketIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/results/': {
-      id: '/results/'
-      path: '/results'
-      fullPath: '/results/'
-      preLoaderRoute: typeof ResultsIndexRouteImport
+    '/reports/': {
+      id: '/reports/'
+      path: '/reports'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof ReportsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -105,7 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminIndexRoute: AdminIndexRoute,
-  ResultsIndexRoute: ResultsIndexRoute,
+  ReportsIndexRoute: ReportsIndexRoute,
   TicketIndexRoute: TicketIndexRoute,
 }
 export const routeTree = rootRouteImport
