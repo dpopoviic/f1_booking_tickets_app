@@ -123,7 +123,7 @@ export default function HeroSection() {
           </Link>
           <Link
             to={`/ticket`}
-            className="inline-block border border-white/60 px-8 py-3 text-sm font-black uppercase tracking-widest text-white transition hover:bg-white/10 active:scale-95"
+            className="inline-block border border-accent-sage px-8 py-3 text-sm font-black uppercase tracking-widest text-white transition hover:bg-white/10 hover:border-white active:scale-95"
           >
             Manage Your Ticket
           </Link>
