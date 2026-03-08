@@ -8,18 +8,31 @@ namespace f1_booking_tickets_API.Controllers
     [ApiController]
     public class CurrencyController : ControllerBase
     {
-        private readonly ICurrencyService _currencyService;
+        public const string AllCurrenciesCacheKey = "currencies:all";
+        public static string ExchangeRateCacheKey(string from, string to) => $"currencies:rate:{from}:{to}";
 
-        public CurrencyController(ICurrencyService currencyService)
+        private readonly ICurrencyService _currencyService;
+        private readonly ICacheService _cacheService;
+
+        public CurrencyController(ICurrencyService currencyService, ICacheService cacheService)
         {
             _currencyService = currencyService;
+            _cacheService = cacheService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GetCurrencyDTO>>> GetAll()
         {
+            var cached = await _cacheService.GetRecord<List<GetCurrencyDTO>>(AllCurrenciesCacheKey);
+            if (cached != null)
+                return Ok(cached);
+
             var currencies = await _currencyService.GetSupportedAsync();
-            return Ok(currencies.Select(c => c.ToGetCurrencyDTO()));
+            var result = currencies.Select(c => c.ToGetCurrencyDTO()).ToList();
+
+            await _cacheService.SetRecord(AllCurrenciesCacheKey, result);
+
+            return Ok(result);
         }
 
         [HttpGet("exchange-rate")]
@@ -27,8 +40,17 @@ namespace f1_booking_tickets_API.Controllers
             [FromQuery] string from, 
             [FromQuery] string to)
         {
+            var cacheKey = ExchangeRateCacheKey(from, to);
+            var cached = await _cacheService.GetRecord<object>(cacheKey);
+            if (cached != null)
+                return Ok(cached);
+
             var rate = await _currencyService.GetExchangeRateAsync(from, to);
-            return Ok(new { from, to, rate });
+            var result = new { from, to, rate };
+
+            await _cacheService.SetRecord(cacheKey, result);
+
+            return Ok(result);
         }
     }
 }
