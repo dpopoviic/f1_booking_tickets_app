@@ -1,6 +1,7 @@
 using f1_booking_tickets.DataAccess;
 using f1_booking_tickets.Services;
 using f1_booking_tickets.Services.If;
+using f1_booking_tickets_API.Caching;
 using f1_booking_tickets_API.HostedServices;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
@@ -37,6 +38,8 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     configuration.AbortOnConnectFail = false;
     return ConnectionMultiplexer.Connect(configuration);
 });
+
+builder.Services.AddSingleton<ICacheService, RedisCacheService>();
 
 builder.Services.AddHostedService<TicketProcessingBackgroundWorker>();
 
