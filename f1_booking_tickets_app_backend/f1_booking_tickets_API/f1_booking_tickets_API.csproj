@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.11">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Scalar.AspNetCore" Version="2.13.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.10.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\f1_booking_tickets.DataAccess\f1_booking_tickets.DataAccess.csproj" />
+    <ProjectReference Include="..\f1_booking_tickets.Domain\f1_booking_tickets.Domain.csproj" />
+    <ProjectReference Include="..\f1_booking_tickets.Services\f1_booking_tickets.Services.csproj" />
+    <ProjectReference Include="..\f1_booking_tickets.Services.If\f1_booking_tickets.Services.If.csproj" />
+  </ItemGroup>
+
+</Project>
