@@ -12,7 +12,7 @@ export default function GetTicketSection() {
           Choose your preferred days and seating zones.
         </p>
         <Link
-          to="/ticket"
+          to="/purchase"
           className="inline-block bg-accent-red px-10 py-4 text-sm font-black uppercase tracking-widest text-white transition hover:bg-accent-red/80 active:scale-95"
         >
           Get Your Tickets Now

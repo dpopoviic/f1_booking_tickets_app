@@ -116,7 +116,7 @@ export default function HeroSection() {
 
         <div className="flex flex-wrap items-center gap-3">
           <Link
-            to={`/ticket`}
+            to={`/purchase`}
             className="inline-block bg-accent-red px-8 py-3 text-sm font-black uppercase tracking-widest text-white transition hover:bg-accent-red/80 active:scale-95"
           >
             Buy Tickets
