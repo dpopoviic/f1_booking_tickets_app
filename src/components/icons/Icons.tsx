@@ -98,3 +98,100 @@ export const PlusIcon = () => (
     />
   </svg>
 )
+
+export const GearIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <circle cx="7" cy="7" r="2.5" stroke="currentColor" strokeWidth="1.3" />
+    <path
+      d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.64 2.64l1.06 1.06M10.3 10.3l1.06 1.06M2.64 11.36l1.06-1.06M10.3 3.7l1.06-1.06"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+    />
+  </svg>
+)
+
+export const CalIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <rect
+      x="1.5"
+      y="2.5"
+      width="11"
+      height="10"
+      rx="1.5"
+      stroke="currentColor"
+      strokeWidth="1.3"
+    />
+    <path
+      d="M4.5 1v3M9.5 1v3M1.5 6h11"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+    />
+  </svg>
+)
+
+export const PinIcon2 = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <circle cx="7" cy="5.5" r="2.5" stroke="currentColor" strokeWidth="1.3" />
+    <path
+      d="M7 13s-4.5-4-4.5-7.5a4.5 4.5 0 019 0C11.5 9 7 13 7 13z"
+      stroke="currentColor"
+      strokeWidth="1.3"
+    />
+  </svg>
+)
+
+export const DollarIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <path
+      d="M7 1v12M4 9.5c0 1.1.9 2 2 2h2a2 2 0 000-4H6a2 2 0 010-4h2a2 2 0 012 2"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+    />
+  </svg>
+)
+
+export const EditIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <path
+      d="M9.5 2.5l2 2-7 7H2.5v-2l7-7z"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+export const SaveIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <rect
+      x="2"
+      y="2"
+      width="10"
+      height="10"
+      rx="1.5"
+      stroke="currentColor"
+      strokeWidth="1.3"
+    />
+    <path
+      d="M4.5 2v3.5h5V2M4.5 9v3"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+    />
+  </svg>
+)
+
+export const XIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <path
+      d="M3 3l8 8M11 3l-8 8"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+  </svg>
+)
