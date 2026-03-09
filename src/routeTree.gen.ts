@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TicketIndexRouteImport } from './routes/ticket/index'
 import { Route as ReportsIndexRouteImport } from './routes/reports/index'
+import { Route as PurchaseIndexRouteImport } from './routes/purchase/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +30,11 @@ const ReportsIndexRoute = ReportsIndexRouteImport.update({
   path: '/reports/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PurchaseIndexRoute = PurchaseIndexRouteImport.update({
+  id: '/purchase/',
+  path: '/purchase/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
@@ -38,12 +44,14 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/purchase/': typeof PurchaseIndexRoute
   '/reports/': typeof ReportsIndexRoute
   '/ticket/': typeof TicketIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminIndexRoute
+  '/purchase': typeof PurchaseIndexRoute
   '/reports': typeof ReportsIndexRoute
   '/ticket': typeof TicketIndexRoute
 }
@@ -51,20 +59,22 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/purchase/': typeof PurchaseIndexRoute
   '/reports/': typeof ReportsIndexRoute
   '/ticket/': typeof TicketIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin/' | '/reports/' | '/ticket/'
+  fullPaths: '/' | '/admin/' | '/purchase/' | '/reports/' | '/ticket/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/reports' | '/ticket'
-  id: '__root__' | '/' | '/admin/' | '/reports/' | '/ticket/'
+  to: '/' | '/admin' | '/purchase' | '/reports' | '/ticket'
+  id: '__root__' | '/' | '/admin/' | '/purchase/' | '/reports/' | '/ticket/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  PurchaseIndexRoute: typeof PurchaseIndexRoute
   ReportsIndexRoute: typeof ReportsIndexRoute
   TicketIndexRoute: typeof TicketIndexRoute
 }
@@ -92,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/purchase/': {
+      id: '/purchase/'
+      path: '/purchase'
+      fullPath: '/purchase/'
+      preLoaderRoute: typeof PurchaseIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/': {
       id: '/admin/'
       path: '/admin'
@@ -105,6 +122,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminIndexRoute: AdminIndexRoute,
+  PurchaseIndexRoute: PurchaseIndexRoute,
   ReportsIndexRoute: ReportsIndexRoute,
   TicketIndexRoute: TicketIndexRoute,
 }
