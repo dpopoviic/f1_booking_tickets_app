@@ -43,6 +43,7 @@ export function Modal({ title, onClose, onSave, children }: ModalProps) {
     </div>
   )
 }
+
 type ConfirmDeleteProps = {
   label: string
   onClose: () => void
