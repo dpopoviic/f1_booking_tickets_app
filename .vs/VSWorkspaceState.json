@@ -1,0 +1,10 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\f1_booking_tickets_app_backend",
+    "\\f1_booking_tickets_app_backend\\f1_booking_tickets.Domain",
+    "\\f1_booking_tickets_app_backend\\f1_booking_tickets.Domain\\Entities"
+  ],
+  "SelectedNode": "\\f1_booking_tickets_app_backend\\f1_booking_tickets.Domain\\Entities\\Ticket.cs",
+  "PreviewInSolutionExplorer": false
+}
