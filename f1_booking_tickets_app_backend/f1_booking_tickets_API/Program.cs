@@ -1,8 +1,11 @@
 using f1_booking_tickets.DataAccess;
 using f1_booking_tickets.Services;
 using f1_booking_tickets.Services.If;
+using f1_booking_tickets_API.Caching;
+using f1_booking_tickets_API.HostedServices;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +30,18 @@ builder.Services.AddScoped<ITicketModificationService, TicketModificationService
 builder.Services.AddScoped<ITicketPurchaseService, TicketPurchaseService>();
 builder.Services.AddScoped<IPromoCodeService, PromoCodeService>();
 builder.Services.AddScoped<ICurrencyService, CurrencyService>();
+
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var configuration = ConfigurationOptions.Parse(redisConnectionString);
+    configuration.AbortOnConnectFail = false;
+    return ConnectionMultiplexer.Connect(configuration);
+});
+
+builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+
+builder.Services.AddHostedService<TicketProcessingBackgroundWorker>();
 
 var app = builder.Build();
 
