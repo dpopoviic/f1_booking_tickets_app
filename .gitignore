@@ -4,3 +4,26 @@
 
 /f1_booking_tickets_app_backend/f1_booking_tickets_API/__doc_extract
 /f1_booking_tickets_app_backend/f1_booking_tickets_API/Projektni zadatak 3 - IIS OAS.docx
+# Build artifacts
+bin/
+obj/
+*.dll
+*.exe
+
+# Visual Studio
+.vs/
+
+# NuGet
+*.nupkg
+
+# Entity Framework
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+
+# Environment
+.env
+appsettings.local.json
