@@ -93,6 +93,7 @@ namespace f1_booking_tickets_API.Controllers
         {
             await _cacheService.DeleteRecord(RaceDaysByRaceCacheKey(raceId));
             await _cacheService.DeleteRecord(RaceController.RaceDetailsCacheKey(raceId));
+            await _cacheService.DeleteRecord(RaceController.NextUpcomingRaceCacheKey);
         }
     }
 }

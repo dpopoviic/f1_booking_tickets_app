@@ -1,60 +1,36 @@
 import { Link } from '@tanstack/react-router'
+import type { RaceDay, RaceDetails } from '#/model/types'
 
-const race = {
-  RaceId: 1,
-  Name: 'Formula 1 Monaco Grand Prix 2026',
-  Location: 'Monaco',
-  BasePrice: 120,
-  DiscountDeadline: 'May 20, 2025',
-  CreatedAt: '2025-01-01',
-  UpdatedAt: '2025-03-01',
-  RaceDays: [
-    {
-      RaceDayId: 1,
-      Date: '2025-05-23',
-      Name: 'Practice Day',
-      Description: 'Practice sessions',
-      DayPrice: 120,
-      Capacity: 5000,
-      SoldTickets: 1200,
-      CreatedAt: '2025-01-05',
-      UpdatedAt: '2025-03-01',
-    },
-    {
-      RaceDayId: 2,
-      Date: '2025-05-24',
-      Name: 'Qualifying Day',
-      Description: 'Qualifying sessions',
-      DayPrice: 180,
-      Capacity: 5000,
-      SoldTickets: 1500,
-      CreatedAt: '2025-01-05',
-      UpdatedAt: '2025-03-01',
-    },
-  ],
+type HeroSectionProps = {
+  race: RaceDetails | null
+  raceDays: RaceDay[]
+  loading: boolean
+  error: string
 }
 
-export default function HeroSection() {
-  const raceDates = race.RaceDays.map((day) => new Date(day.Date).getTime())
-
-  const startDate = new Date(Math.min(...raceDates)).toLocaleDateString(
-    'en-GB',
-    {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    },
-  )
-
-  const endDate = new Date(Math.max(...raceDates)).toLocaleDateString('en-GB', {
+function formatDateLabel(dateValue: string): string {
+  return new Date(dateValue).toLocaleDateString('en-GB', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   })
-  const raceDaysCount = race.RaceDays.length
-  const raceDayDescriptions = race.RaceDays.map(
-    (day) => `${day.Name}: ${day.Description}`,
-  ).join(' | ')
+}
+
+export default function HeroSection({
+  race,
+  raceDays,
+  loading,
+  error,
+}: HeroSectionProps) {
+  const startDate = raceDays.length > 0 ? formatDateLabel(raceDays[0].date) : null
+  const endDate =
+    raceDays.length > 0 ? formatDateLabel(raceDays[raceDays.length - 1].date) : null
+  const dateRange = startDate && endDate ? `${startDate} – ${endDate}` : 'Dates TBA'
+
+  const raceDaysCount = raceDays.length
+  const raceDayDescriptions = raceDays.map(
+    (day) => `${day.name}: ${day.description}`,
+  ).join('\n')
 
   return (
     <section className="relative min-h-130 flex items-center overflow-hidden bg-black">
@@ -66,13 +42,13 @@ export default function HeroSection() {
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-8 py-20">
         <p className="mb-4 text-sm font-bold uppercase tracking-widest text-accent-red">
-          {startDate} – {endDate}
+          {loading ? 'Loading schedule...' : dateRange}
         </p>
         <h1
           className="mb-6 max-w-3xl text-5xl font-black uppercase leading-none tracking-tight text-white md:text-6xl lg:text-7xl"
           style={{ fontStyle: 'italic' }}
         >
-          {race.Name}
+          {race?.name ?? 'Upcoming Formula 1 Weekend'}
         </h1>
         <div className="mb-6 flex flex-wrap items-center gap-6 text-sm text-accent-sage">
           <span className="flex items-center gap-1.5">
@@ -89,7 +65,7 @@ export default function HeroSection() {
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
               <circle cx="12" cy="10" r="3" />
             </svg>
-            {race.Location}
+            {race?.location ?? 'Location TBA'}
           </span>
           <span className="flex items-center gap-1.5">
             <svg
@@ -109,10 +85,23 @@ export default function HeroSection() {
             </svg>
             {raceDaysCount} Race Days
           </span>
+          {race && (
+            <span className="flex items-center gap-1.5">From EUR {race.basePrice}</span>
+          )}
         </div>
-        <p className="mb-8 max-w-lg text-sm text-accent-sage">
-          {raceDayDescriptions}
+        <p className="mb-8 max-w-lg text-sm text-accent-sage whitespace-pre-line">
+          {loading
+            ? 'Preparing race details...'
+            : raceDayDescriptions || 'Race day schedule will be available soon.'}
         </p>
+
+        {error && <p className="mb-6 text-sm text-red-400">{error}</p>}
+
+        {!loading && !error && !race && (
+          <p className="mb-6 text-sm text-accent-sage">
+            There are currently no upcoming races.
+          </p>
+        )}
 
         <div className="flex flex-wrap items-center gap-3">
           <Link

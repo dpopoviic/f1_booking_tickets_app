@@ -9,6 +9,7 @@ namespace f1_booking_tickets_API.Controllers
     public class RaceController : ControllerBase
     {
         public const string AllRacesCacheKey = "races:all";
+        public const string NextUpcomingRaceCacheKey = "races:next-upcoming";
         public static string RaceDetailsCacheKey(int id) => $"races:{id}:details";
 
         private readonly IRaceService _raceService;
@@ -53,6 +54,23 @@ namespace f1_booking_tickets_API.Controllers
             return Ok(result);
         }
 
+        [HttpGet("next-upcoming")]
+        public async Task<ActionResult<GetRaceDetailsDTO>> GetNextUpcoming()
+        {
+            var cached = await _cacheService.GetRecord<GetRaceDetailsDTO>(NextUpcomingRaceCacheKey);
+            if (cached != null)
+                return Ok(cached);
+
+            var race = await _raceService.GetNextUpcomingAsync();
+            if (race == null)
+                return NotFound();
+
+            var result = race.ToGetRaceDetailsDTO();
+            await _cacheService.SetRecord(NextUpcomingRaceCacheKey, result);
+
+            return Ok(result);
+        }
+
         [HttpPost]
         public async Task<ActionResult<GetRaceDetailsDTO>> Create([FromBody] CreateRaceDTO dto)
         {
@@ -60,6 +78,7 @@ namespace f1_booking_tickets_API.Controllers
             var created = await _raceService.CreateAsync(race);
 
             await _cacheService.DeleteRecord(AllRacesCacheKey);
+            await _cacheService.DeleteRecord(NextUpcomingRaceCacheKey);
 
             return CreatedAtAction(nameof(GetById), new { id = created.RaceId }, created.ToGetRaceDetailsDTO());
         }
@@ -74,6 +93,7 @@ namespace f1_booking_tickets_API.Controllers
             var updated = await _raceService.UpdateAsync(race);
 
             await _cacheService.DeleteRecord(AllRacesCacheKey);
+            await _cacheService.DeleteRecord(NextUpcomingRaceCacheKey);
             await _cacheService.DeleteRecord(RaceDetailsCacheKey(id));
 
             return Ok(updated.ToGetRaceDetailsDTO());
@@ -85,6 +105,7 @@ namespace f1_booking_tickets_API.Controllers
             await _raceService.DeleteAsync(id);
 
             await _cacheService.DeleteRecord(AllRacesCacheKey);
+            await _cacheService.DeleteRecord(NextUpcomingRaceCacheKey);
             await _cacheService.DeleteRecord(RaceDetailsCacheKey(id));
 
             return NoContent();
