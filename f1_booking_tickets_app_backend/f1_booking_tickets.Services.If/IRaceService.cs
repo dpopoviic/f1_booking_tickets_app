@@ -11,6 +11,7 @@ namespace f1_booking_tickets.Services.If
     {
         Task<IReadOnlyCollection<Race>> GetAllAsync(CancellationToken cancellationToken = default);
         Task<Race?> GetByIdAsync(int raceId, CancellationToken cancellationToken = default);
+        Task<Race?> GetNextUpcomingAsync(CancellationToken cancellationToken = default);
         Task<Race> CreateAsync(Race race, CancellationToken cancellationToken = default);
         Task<Race> UpdateAsync(Race race, CancellationToken cancellationToken = default);
         Task DeleteAsync(int raceId, CancellationToken cancellationToken = default);
