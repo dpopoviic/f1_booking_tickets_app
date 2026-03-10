@@ -23,3 +23,8 @@ body {
 .clip-rhombus {
   clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
 }
+
+input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}

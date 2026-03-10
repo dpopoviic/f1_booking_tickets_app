@@ -116,7 +116,7 @@ export function TabZones({ showToast }: TabProps) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
         <h2
           className="font-bold uppercase tracking-widest text-white text-xl"
           style={{ fontFamily: "'Barlow Condensed',sans-serif" }}
@@ -129,38 +129,39 @@ export function TabZones({ showToast }: TabProps) {
         </RedBtn>
       </div>
 
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-neutral-800">
-            {[
-              'Name',
-              'Capacity',
-              'Available',
-              'Price Modifier',
-              'Characteristics',
-              'Actions',
-            ].map((h) => (
-              <th
-                key={h}
-                className="text-left text-xs font-bold uppercase tracking-widest text-neutral-500 pb-3 pr-4"
-              >
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
+      <div className="md:hidden space-y-3">
+        {zones.map((z) => (
+          <div
+            key={z.id}
+            className="border border-neutral-800 rounded-lg p-4 bg-neutral-900/40"
+          >
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="font-semibold text-white">{z.name}</h3>
 
-        <tbody>
-          {zones.map((z) => (
-            <tr
-              key={z.id}
-              className="border-b border-neutral-800/60 hover:bg-neutral-800/20 transition-colors"
-            >
-              <td className="py-3.5 pr-4 font-semibold text-white">{z.name}</td>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => openEdit(z)}
+                  className="text-neutral-400 hover:text-white"
+                >
+                  <EditIcon />
+                </button>
 
-              <td className="py-3.5 pr-4 text-neutral-400">{z.capacity}</td>
+                <button
+                  onClick={() => setDeleteTarget(z)}
+                  className="text-neutral-400 hover:text-red-400"
+                >
+                  <TrashIcon />
+                </button>
+              </div>
+            </div>
 
-              <td className="py-3.5 pr-4 ">
+            <div className="text-sm text-neutral-400 space-y-1">
+              <p>
+                <span className="text-neutral-500">Capacity:</span> {z.capacity}
+              </p>
+
+              <p>
+                <span className="text-neutral-500">Available:</span>{' '}
                 <span
                   className={`font-semibold ${
                     z.available > 0 ? 'text-green-400' : 'text-red-400'
@@ -168,48 +169,110 @@ export function TabZones({ showToast }: TabProps) {
                 >
                   {z.available}
                 </span>
-              </td>
+              </p>
 
-              <td className="py-3.5 pr-4 font-semibold text-white">
+              <p>
+                <span className="text-neutral-500">Price:</span>{' '}
                 {z.priceModifier === 0 ? '+€0' : `+€${z.priceModifier}`}
-              </td>
+              </p>
 
-              <td className="py-3.5 pr-4 text-neutral-400">
-                {z.characteristics}
-              </td>
+              <p className="text-neutral-500">{z.characteristics}</p>
+            </div>
+          </div>
+        ))}
 
-              <td className="py-3.5">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => openEdit(z)}
-                    className="text-neutral-500 hover:text-neutral-200 transition-colors"
-                  >
-                    <EditIcon />
-                  </button>
+        {zones.length === 0 && (
+          <p className="text-center text-neutral-500 py-6">
+            No zones added yet.
+          </p>
+        )}
+      </div>
 
-                  <button
-                    onClick={() => setDeleteTarget(z)}
-                    className="text-neutral-500 hover:text-red-400 transition-colors"
-                  >
-                    <TrashIcon />
-                  </button>
-                </div>
-              </td>
+      <div className="hidden md:block">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-neutral-800">
+              {[
+                'Name',
+                'Capacity',
+                'Available',
+                'Price Modifier',
+                'Characteristics',
+                'Actions',
+              ].map((h) => (
+                <th
+                  key={h}
+                  className="text-left text-xs font-bold uppercase tracking-widest text-neutral-500 pb-3 pr-4"
+                >
+                  {h}
+                </th>
+              ))}
             </tr>
-          ))}
+          </thead>
 
-          {zones.length === 0 && (
-            <tr>
-              <td
-                colSpan={6}
-                className="py-8 text-center text-neutral-600 text-sm"
+          <tbody>
+            {zones.map((z) => (
+              <tr
+                key={z.id}
+                className="border-b border-neutral-800/60 hover:bg-neutral-800/20 transition-colors"
               >
-                No zones added yet.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+                <td className="py-3.5 pr-4 font-semibold text-white">
+                  {z.name}
+                </td>
+
+                <td className="py-3.5 pr-4 text-neutral-400">{z.capacity}</td>
+
+                <td className="py-3.5 pr-4">
+                  <span
+                    className={`font-semibold ${
+                      z.available > 0 ? 'text-green-400' : 'text-red-400'
+                    }`}
+                  >
+                    {z.available}
+                  </span>
+                </td>
+
+                <td className="py-3.5 pr-4 font-semibold text-white">
+                  {z.priceModifier === 0 ? '+€0' : `+€${z.priceModifier}`}
+                </td>
+
+                <td className="py-3.5 pr-4 text-neutral-400">
+                  {z.characteristics}
+                </td>
+
+                <td className="py-3.5">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => openEdit(z)}
+                      className="text-neutral-500 hover:text-neutral-200"
+                    >
+                      <EditIcon />
+                    </button>
+
+                    <button
+                      onClick={() => setDeleteTarget(z)}
+                      className="text-neutral-500 hover:text-red-400"
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+
+            {zones.length === 0 && (
+              <tr>
+                <td
+                  colSpan={6}
+                  className="py-8 text-center text-neutral-600 text-sm"
+                >
+                  No zones added yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {modal && (
         <Modal

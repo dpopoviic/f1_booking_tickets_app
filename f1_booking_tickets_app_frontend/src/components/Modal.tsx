@@ -20,7 +20,7 @@ export function Modal({ title, onClose, onSave, children }: ModalProps) {
       >
         <div className="flex items-center justify-between mb-5">
           <h3
-            className="text-base font-bold uppercase tracking-wide"
+            className="text-base font-bold uppercase tracking-wide text-white"
             style={{ fontFamily: "'Barlow Condensed',sans-serif" }}
           >
             {title}

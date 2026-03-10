@@ -53,12 +53,13 @@ export const CalendarIcon = () => (
       width="12"
       height="11"
       rx="2"
-      stroke="#E8102A"
+      stroke="currentColor"
       strokeWidth="1.4"
+      fill="none"
     />
     <path
       d="M5 1v3M11 1v3M2 7h12"
-      stroke="#E8102A"
+      stroke="currentColor"
       strokeWidth="1.4"
       strokeLinecap="round"
     />

@@ -60,7 +60,7 @@ export default function App() {
     <div className="bg-dark-surface">
       <div className="min-h-screen w-full px-6 py-8 max-w-5xl mx-auto bg-dark-surface">
         <h1
-          className="text-4xl font-extrabold uppercase tracking-wide mb-6 text-white"
+          className="lg:text-4xl text-2xl font-extrabold uppercase tracking-wide mb-6 text-white"
           style={{ fontFamily: "'Barlow Condensed',sans-serif" }}
         >
           Administration

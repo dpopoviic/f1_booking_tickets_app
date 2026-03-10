@@ -119,7 +119,7 @@ export default function TabRaceDays({ showToast }: TabProps) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
         <h2
           className="font-bold uppercase tracking-widest text-white text-xl"
           style={{ fontFamily: "'Barlow Condensed',sans-serif" }}
@@ -132,67 +132,124 @@ export default function TabRaceDays({ showToast }: TabProps) {
         </RedBtn>
       </div>
 
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-neutral-800">
-            {['Name', 'Date', 'Base Price', 'Description', 'Actions'].map(
-              (h) => (
-                <th
-                  key={h}
-                  className="text-left text-xs font-bold uppercase tracking-widest text-neutral-500 pb-3 pr-4"
+      <div className="md:hidden space-y-3">
+        {days.map((d) => (
+          <div
+            key={d.id}
+            className="border border-neutral-800 rounded-lg p-4 bg-neutral-900/40"
+          >
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="font-semibold text-white">{d.name}</h3>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => openEdit(d)}
+                  className="text-neutral-400 hover:text-white"
                 >
-                  {h}
-                </th>
-              ),
-            )}
-          </tr>
-        </thead>
+                  <EditIcon />
+                </button>
 
-        <tbody>
-          {days.map((d) => (
-            <tr
-              key={d.id}
-              className="border-b border-neutral-800/60 hover:bg-neutral-800/20 transition-colors"
-            >
-              <td className="py-3.5 pr-4 font-semibold text-white">{d.name}</td>
-              <td className="py-3.5 pr-4 text-neutral-400">{d.date}</td>
-              <td className="py-3.5 pr-4 font-semibold text-white">
-                €{d.basePrice}
-              </td>
-              <td className="py-3.5 pr-4 text-neutral-400">{d.description}</td>
+                <button
+                  onClick={() => setDeleteTarget(d)}
+                  className="text-neutral-400 hover:text-red-400"
+                >
+                  <TrashIcon />
+                </button>
+              </div>
+            </div>
 
-              <td className="py-3.5">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => openEdit(d)}
-                    className="text-neutral-500 hover:text-neutral-200 transition-colors"
+            <div className="text-sm text-neutral-400 space-y-1">
+              <p>
+                <span className="text-neutral-500">Date:</span> {d.date}
+              </p>
+
+              <p>
+                <span className="text-neutral-500">Base Price:</span>{' '}
+                <span className="text-white font-semibold">€{d.basePrice}</span>
+              </p>
+
+              <p className="text-neutral-500">{d.description}</p>
+            </div>
+          </div>
+        ))}
+
+        {days.length === 0 && (
+          <p className="text-center text-neutral-500 py-6">
+            No race days added yet.
+          </p>
+        )}
+      </div>
+
+      <div className="hidden md:block">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-neutral-800">
+              {['Name', 'Date', 'Base Price', 'Description', 'Actions'].map(
+                (h) => (
+                  <th
+                    key={h}
+                    className="text-left text-xs font-bold uppercase tracking-widest text-neutral-500 pb-3 pr-4"
                   >
-                    <EditIcon />
-                  </button>
-
-                  <button
-                    onClick={() => setDeleteTarget(d)}
-                    className="text-neutral-500 hover:text-red-400 transition-colors"
-                  >
-                    <TrashIcon />
-                  </button>
-                </div>
-              </td>
+                    {h}
+                  </th>
+                ),
+              )}
             </tr>
-          ))}
+          </thead>
 
-          {days.length === 0 && (
-            <tr>
-              <td
-                colSpan={5}
-                className="py-8 text-center text-neutral-600 text-sm"
+          <tbody>
+            {days.map((d) => (
+              <tr
+                key={d.id}
+                className="border-b border-neutral-800/60 hover:bg-neutral-800/20 transition-colors"
               >
-                No race days added yet.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+                <td className="py-3.5 pr-4 font-semibold text-white">
+                  {d.name}
+                </td>
+
+                <td className="py-3.5 pr-4 text-neutral-400">{d.date}</td>
+
+                <td className="py-3.5 pr-4 font-semibold text-white">
+                  €{d.basePrice}
+                </td>
+
+                <td className="py-3.5 pr-4 text-neutral-400">
+                  {d.description}
+                </td>
+
+                <td className="py-3.5">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => openEdit(d)}
+                      className="text-neutral-500 hover:text-neutral-200"
+                    >
+                      <EditIcon />
+                    </button>
+
+                    <button
+                      onClick={() => setDeleteTarget(d)}
+                      className="text-neutral-500 hover:text-red-400"
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+
+            {days.length === 0 && (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="py-8 text-center text-neutral-600 text-sm"
+                >
+                  No race days added yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {modal && (
         <Modal
