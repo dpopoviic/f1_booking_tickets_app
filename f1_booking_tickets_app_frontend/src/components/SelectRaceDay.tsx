@@ -2,15 +2,15 @@ import type { RaceDay } from '#/model/types'
 
 type SelectDayProps = {
   raceDays: RaceDay[]
-  selectedDay: RaceDay | null
-  setSelectedDay: (day: RaceDay) => void
+  selectedDayIds: number[]
+  onToggleDay: (day: RaceDay) => void
   loading?: boolean
 }
 
 export default function SelectRaceDay({
   raceDays,
-  selectedDay,
-  setSelectedDay,
+  selectedDayIds,
+  onToggleDay,
   loading = false,
 }: SelectDayProps) {
   if (loading) {
@@ -20,7 +20,7 @@ export default function SelectRaceDay({
           className="text-4xl font-extrabold uppercase tracking-wide mb-1 text-white"
           style={{ fontFamily: "'Barlow Condensed',sans-serif" }}
         >
-          Select Race Day
+          Select Race Days
         </h2>
         <p className="text-md text-accent-sage mb-4">Loading race days...</p>
         <div className="animate-pulse space-y-3">
@@ -38,7 +38,7 @@ export default function SelectRaceDay({
           className="text-4xl font-extrabold uppercase tracking-wide mb-1 text-white"
           style={{ fontFamily: "'Barlow Condensed',sans-serif" }}
         >
-          Select Race Day
+          Select Race Days
         </h2>
         <p className="text-md text-accent-sage mb-4">
           Please select a race first.
@@ -53,14 +53,14 @@ export default function SelectRaceDay({
         className="text-4xl font-extrabold uppercase tracking-wide mb-1 text-white"
         style={{ fontFamily: "'Barlow Condensed',sans-serif" }}
       >
-        Select Race Day
+        Select Race Days
       </h2>
       <p className="text-md text-accent-sage mb-4">
-        Choose the day you want to attend.
+        Choose one or more race days.
       </p>
       <div className="space-y-3">
         {raceDays.map((d) => {
-          const active = selectedDay?.raceDayId === d.raceDayId
+          const active = selectedDayIds.includes(d.raceDayId)
           const dateStr = new Date(d.date).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
@@ -69,7 +69,7 @@ export default function SelectRaceDay({
           return (
             <div
               key={d.raceDayId}
-              onClick={() => setSelectedDay(d)}
+              onClick={() => onToggleDay(d)}
               className={`flex items-center justify-between px-5 py-4 border rounded-lg cursor-pointer transition-all duration-200
                       ${active ? 'border-accent-red bg-accent-red/10' : 'border-accent-sage/30  hover:border-accent-sage/50'}`}
             >

@@ -1,14 +1,18 @@
-import type { RaceDay, SeatingZone, Race } from '#/model/types'
+import type { RaceDay, SeatingZone } from '#/model/types'
 
 type AppliedPromo = {
   code: string
   discountPercentage: number
 } | null
 
+type SelectedItem = {
+  day: RaceDay
+  zone: SeatingZone
+}
+
 type FinishPurchaseProps = {
-  race: Race | null
-  selectedDay: RaceDay | null
-  selectedZone: SeatingZone | null
+  selectedItems: SelectedItem[]
+  isReadyToSubmit: boolean
   appliedPromo: AppliedPromo
   currency: string
   handleSubmit: () => void
@@ -16,27 +20,21 @@ type FinishPurchaseProps = {
 }
 
 export default function FinishPurchase({
-  race,
-  selectedDay,
-  selectedZone,
+  selectedItems,
+  isReadyToSubmit,
   appliedPromo,
   currency,
   handleSubmit,
   loading = false,
 }: FinishPurchaseProps) {
-  // Calculate price: basePrice from race + dayPrice + (basePrice * priceMultiplier)
-  const calculatePrice = () => {
-    if (!race || !selectedDay || !selectedZone) return 0
-    const dayPrice = selectedDay.dayPrice
-    const zoneMultiplier = selectedZone.priceMultiplier
-    return dayPrice * zoneMultiplier
-  }
+  const subTotal = selectedItems.reduce((sum, item) => {
+    return sum + item.day.dayPrice * item.zone.priceMultiplier
+  }, 0)
 
-  const basePrice = calculatePrice()
   const discount = appliedPromo
-    ? (basePrice * appliedPromo.discountPercentage) / 100
+    ? (subTotal * appliedPromo.discountPercentage) / 100
     : 0
-  const total = basePrice - discount
+  const total = subTotal - discount
 
   return (
     <section className="border border-dark-extreme rounded-lg p-5 max-w-5xl mx-auto mt-6">
@@ -47,15 +45,26 @@ export default function FinishPurchase({
         Order Summary
       </h2>
 
-      {selectedDay && selectedZone ? (
+      {selectedItems.length > 0 ? (
         <>
-          <div className="flex justify-between text-sm mb-2 text-accent-sage">
-            <span>
-              {selectedDay.name} — {selectedZone.name}
-            </span>
-            <span>
-              {currency === 'EUR' ? '€' : currency}{basePrice.toFixed(2)}
-            </span>
+          <div className="space-y-2 mb-2">
+            {selectedItems.map((item) => {
+              const linePrice = item.day.dayPrice * item.zone.priceMultiplier
+
+              return (
+                <div
+                  key={`${item.day.raceDayId}-${item.zone.seatingZoneId}`}
+                  className="flex justify-between text-sm text-accent-sage"
+                >
+                  <span>
+                    {item.day.name} - {item.zone.name}
+                  </span>
+                  <span>
+                    {currency === 'EUR' ? '€' : currency}{linePrice.toFixed(2)}
+                  </span>
+                </div>
+              )
+            })}
           </div>
 
           {appliedPromo && (
@@ -84,7 +93,7 @@ export default function FinishPurchase({
 
       <button
         onClick={handleSubmit}
-        disabled={loading || !selectedDay || !selectedZone}
+        disabled={loading || !isReadyToSubmit}
         className="w-full py-3.5 rounded-md text-md cursor-pointer font-semibold text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         style={{ backgroundColor: '#E8102A' }}
         onMouseEnter={(e) =>

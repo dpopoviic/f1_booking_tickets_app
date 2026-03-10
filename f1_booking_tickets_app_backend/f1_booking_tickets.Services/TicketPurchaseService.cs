@@ -27,6 +27,18 @@ namespace f1_booking_tickets.Services
             if (request.Email != request.EmailConfirmation)
                 throw new InvalidOperationException("Email addresses do not match");
 
+            if (request.Items == null || request.Items.Count == 0)
+                throw new InvalidOperationException("At least one race day with seating zone must be selected");
+
+            var duplicateRaceDayIds = request.Items
+                .GroupBy(i => i.RaceDayId)
+                .Where(group => group.Count() > 1)
+                .Select(group => group.Key)
+                .ToList();
+
+            if (duplicateRaceDayIds.Count > 0)
+                throw new InvalidOperationException("Each selected race day can only be assigned once");
+
             var normalizedCurrencyCode = string.IsNullOrWhiteSpace(request.CurrencyCode)
                 ? "EUR"
                 : request.CurrencyCode.Trim().ToUpperInvariant();

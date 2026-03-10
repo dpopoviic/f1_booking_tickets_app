@@ -27,8 +27,8 @@ export default function BuyTicket() {
   const [loadingData, setLoadingData] = useState(false)
   
   // User selections
-  const [selectedDay, setSelectedDay] = useState<RaceDay | null>(null)
-  const [selectedZone, setSelectedZone] = useState<SeatingZone | null>(null)
+  const [selectedDayIds, setSelectedDayIds] = useState<number[]>([])
+  const [zoneByDayId, setZoneByDayId] = useState<Record<number, number | undefined>>({})
   const [appliedPromo, setAppliedPromo] = useState<AppliedPromo>(null)
   const [currency, setCurrency] = useState('EUR')
   
@@ -54,15 +54,15 @@ export default function BuyTicket() {
     if (!selectedRace) {
       setRaceDays([])
       setZones([])
-      setSelectedDay(null)
-      setSelectedZone(null)
+      setSelectedDayIds([])
+      setZoneByDayId({})
       return
     }
 
     const fetchData = async () => {
       setLoadingData(true)
-      setSelectedDay(null)
-      setSelectedZone(null)
+      setSelectedDayIds([])
+      setZoneByDayId({})
       
       try {
         const [daysData, zonesData] = await Promise.all([
@@ -83,9 +83,81 @@ export default function BuyTicket() {
     fetchData()
   }, [selectedRace])
 
+  const handleToggleRaceDay = (day: RaceDay) => {
+    setSelectedDayIds((currentIds) => {
+      const isSelected = currentIds.includes(day.raceDayId)
+
+      if (isSelected) {
+        setZoneByDayId((currentZoneByDayId) => {
+          const next = { ...currentZoneByDayId }
+          delete next[day.raceDayId]
+          return next
+        })
+
+        return currentIds.filter((id) => id !== day.raceDayId)
+      }
+
+      return [...currentIds, day.raceDayId]
+    })
+  }
+
+  const handleSelectZoneForDay = (raceDayId: number, zone: SeatingZone) => {
+    const zoneId = Number((zone as SeatingZone & { zoneId?: number }).zoneId ?? zone.seatingZoneId)
+
+    if (!Number.isFinite(zoneId)) {
+      return
+    }
+
+    setZoneByDayId((currentZoneByDayId) => ({
+      ...currentZoneByDayId,
+      [raceDayId]: zoneId,
+    }))
+  }
+
+  const selectedItems = selectedDayIds
+    .map((dayId) => {
+      const day = raceDays.find((raceDay) => raceDay.raceDayId === dayId)
+      const zoneId = zoneByDayId[dayId]
+      const zone = zones.find((seatingZone) => seatingZone.seatingZoneId === zoneId)
+
+      if (!day || !zone) {
+        return null
+      }
+
+      return { day, zone }
+    })
+    .filter((item): item is { day: RaceDay; zone: SeatingZone } => item !== null)
+
+  const isReadyToSubmit =
+    selectedDayIds.length > 0 &&
+    selectedItems.length === selectedDayIds.length
+
   const handleSubmit = async () => {
-    if (!selectedRace || !selectedDay || !selectedZone) {
-      alert('Please select race, day and seating zone!')
+    if (!selectedRace) {
+      alert('Please select race first!')
+      return
+    }
+
+    if (selectedDayIds.length === 0) {
+      alert('Please select at least one race day!')
+      return
+    }
+
+    const items = selectedDayIds.map((raceDayId) => {
+      const zoneId = Number(zoneByDayId[raceDayId])
+
+      if (!Number.isFinite(zoneId)) {
+        return null
+      }
+
+      return {
+        raceDayId,
+        zoneId,
+      }
+    })
+
+    if (items.some((item) => item === null)) {
+      alert('Please select a seating zone for each selected race day!')
       return
     }
 
@@ -103,14 +175,7 @@ export default function BuyTicket() {
       return
     }
 
-    const raceDayId = Number(selectedDay.raceDayId)
-    const zoneId = Number((selectedZone as SeatingZone & { zoneId?: number }).zoneId ?? selectedZone.seatingZoneId)
     const normalizedCurrency = (currency || 'EUR').trim().toUpperCase()
-
-    if (!Number.isFinite(raceDayId) || !Number.isFinite(zoneId)) {
-      alert('Race day or seating zone is invalid. Please reselect and try again.')
-      return
-    }
 
     setPurchasing(true)
 
@@ -125,12 +190,7 @@ export default function BuyTicket() {
         emailConfirmation: form.emailConfirmation,
         currencyCode: normalizedCurrency,
         promoCode: appliedPromo?.code,
-        items: [
-          {
-            raceDayId,
-            zoneId,
-          },
-        ],
+        items: items.filter((item): item is { raceDayId: number; zoneId: number } => item !== null),
       })
 
       setPurchaseResult(result)
@@ -226,14 +286,16 @@ export default function BuyTicket() {
       />
       <SelectRaceDay
         raceDays={raceDays}
-        selectedDay={selectedDay}
-        setSelectedDay={setSelectedDay}
+        selectedDayIds={selectedDayIds}
+        onToggleDay={handleToggleRaceDay}
         loading={loadingData}
       />
       <SelectSeat
+        raceDays={raceDays}
+        selectedDayIds={selectedDayIds}
         zones={zones}
-        selectedZone={selectedZone}
-        setSelectedZone={setSelectedZone}
+        zoneByDayId={zoneByDayId}
+        onSelectZoneForDay={handleSelectZoneForDay}
         loading={loadingData}
       />
       <YourInfo
@@ -247,9 +309,8 @@ export default function BuyTicket() {
         setAppliedPromo={setAppliedPromo}
       />
       <FinishPurchase
-        race={selectedRace}
-        selectedDay={selectedDay}
-        selectedZone={selectedZone}
+        selectedItems={selectedItems}
+        isReadyToSubmit={isReadyToSubmit}
         appliedPromo={appliedPromo}
         currency={currency}
         handleSubmit={handleSubmit}
