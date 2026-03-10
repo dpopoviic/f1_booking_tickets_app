@@ -1,36 +1,11 @@
 import { useState } from 'react'
 import { SearchIcon } from './icons/Icons'
-
-export const MOCK_TICKETS = [
-  {
-    ticketId: '4f39b1f4-83ef-477b-bf54-161f78edec57',
-    accessCode: 'M2AVEZHL',
-    email: 'mark.miles@gmail.com',
-    firstName: 'Mark',
-    lastName: 'Miles',
-    isActive: true,
-    promoCode: { code: 'PROMO-V9XG72', discountPercentage: 5 },
-    raceDays: [{ name: 'Practice Day', zone: 'General Admission', price: 80 }],
-    total: 120,
-  },
-  {
-    ticketId: 'a1b2c3d4-0000-1111-2222-333344445555',
-    accessCode: 'XK9TRMPL',
-    email: 'john@example.com',
-    firstName: 'John',
-    lastName: 'Doe',
-    isActive: true,
-    promoCode: { code: 'PROMO-AB1234', discountPercentage: 10 },
-    raceDays: [
-      { name: 'Qualifying Day', zone: 'VIP Grandstand', price: 230 },
-      { name: 'Race Day', zone: 'General Admission', price: 320 },
-    ],
-    total: 495,
-  },
-]
+import { ticketService } from '#/api/ticketService'
+import type { TicketDetails } from '#/model/types'
+import { ApiError } from '#/api/client'
 
 type FindTicketProps = {
-  onFound: (ticket: (typeof MOCK_TICKETS)[number]) => void
+  onFound: (ticket: TicketDetails) => void
 }
 
 export default function FindTicket({ onFound }: FindTicketProps) {
@@ -39,26 +14,30 @@ export default function FindTicket({ onFound }: FindTicketProps) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleFind = () => {
+  const handleFind = async () => {
     if (!accessCode.trim() || !email.trim()) {
       setError('Please enter both access code and email.')
       return
     }
     setLoading(true)
     setError('')
-    setTimeout(() => {
-      const ticket = MOCK_TICKETS.find(
-        (t) =>
-          t.accessCode.toUpperCase() === accessCode.trim().toUpperCase() &&
-          t.email.toLowerCase() === email.trim().toLowerCase(),
+
+    try {
+      const ticket = await ticketService.findByCodeAndEmail(
+        accessCode.trim(),
+        email.trim(),
       )
-      setLoading(false)
-      if (ticket) {
-        onFound(ticket)
-      } else {
+      onFound(ticket)
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
         setError('No ticket found. Please check your access code and email.')
+      } else {
+        setError('Failed to find ticket. Please try again.')
+        console.error('Error finding ticket:', err)
       }
-    }, 600)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

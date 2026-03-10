@@ -1,32 +1,52 @@
-import { useState } from 'react'
-
-export const SEATING_ZONES = [
-  {
-    seatingZoneId: 1,
-    name: 'VIP Grandstand',
-    description: 'Premium view, hospitality included',
-    capacity: 99,
-    priceModifier: 50,
-  },
-  {
-    seatingZoneId: 2,
-    name: 'General Admission',
-    description: 'Great atmosphere',
-    capacity: 499,
-    priceModifier: 0,
-  },
-]
+import type { SeatingZone } from '#/model/types'
 
 type SelectZoneProps = {
-  selectedZone: (typeof SEATING_ZONES)[number] | null
-  setSelectedZone: (zone: (typeof SEATING_ZONES)[number]) => void
+  zones: SeatingZone[]
+  selectedZone: SeatingZone | null
+  setSelectedZone: (zone: SeatingZone) => void
+  loading?: boolean
 }
 
-export default function SelectTicket({
+export default function SelectSeat({
+  zones,
   selectedZone,
   setSelectedZone,
+  loading = false,
 }: SelectZoneProps) {
-  const [errors, setErrors] = useState('')
+  if (loading) {
+    return (
+      <section className="max-w-5xl mx-auto p-6 bg-transparent rounded-lg">
+        <h2
+          className="text-4xl font-extrabold uppercase tracking-wide mb-1 text-white"
+          style={{ fontFamily: "'Barlow Condensed',sans-serif" }}
+        >
+          Seating Zone
+        </h2>
+        <p className="text-md text-accent-sage mb-4">Loading zones...</p>
+        <div className="animate-pulse grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="h-32 bg-neutral-800 rounded-lg" />
+          <div className="h-32 bg-neutral-800 rounded-lg" />
+        </div>
+      </section>
+    )
+  }
+
+  if (zones.length === 0) {
+    return (
+      <section className="max-w-5xl mx-auto p-6 bg-transparent rounded-lg">
+        <h2
+          className="text-4xl font-extrabold uppercase tracking-wide mb-1 text-white"
+          style={{ fontFamily: "'Barlow Condensed',sans-serif" }}
+        >
+          Seating Zone
+        </h2>
+        <p className="text-md text-accent-sage mb-4">
+          Please select a race first.
+        </p>
+      </section>
+    )
+  }
+
   return (
     <section className="max-w-5xl mx-auto p-6 bg-transparent rounded-lg">
       <h2
@@ -38,19 +58,18 @@ export default function SelectTicket({
       <p className="text-md text-accent-sage mb-4">
         Choose your preferred seating area.
       </p>
-      {errors && !selectedZone && (
-        <p className="text-xs text-red-500 mb-3">{errors}</p>
-      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {SEATING_ZONES.map((z) => {
+        {zones.map((z) => {
           const active = selectedZone?.seatingZoneId === z.seatingZoneId
+          const priceModifier = z.priceMultiplier > 1 
+            ? `×${z.priceMultiplier}` 
+            : z.priceMultiplier === 1 
+              ? '×1' 
+              : `×${z.priceMultiplier}`
           return (
             <div
               key={z.seatingZoneId}
-              onClick={() => {
-                setSelectedZone(z)
-                setErrors('Please select a seating type to proceed.')
-              }}
+              onClick={() => setSelectedZone(z)}
               className={`border rounded-lg p-4 cursor-pointer transition-all duration-200
                       ${active ? 'border-accent-red bg-accent-red/10' : 'border-accent-sage/30 hover:accent-sage/50'}`}
             >
@@ -64,15 +83,15 @@ export default function SelectTicket({
                   {z.capacity} seats
                 </span>
               </div>
-              <div className="text-md text-accent-sage text-accent-sagemb-3">
-                {z.description}
+              <div className="text-md text-accent-sage mb-3">
+                {z.name}
               </div>
               <div className="flex justify-between items-center border-t border-accent-sage/30 pt-2.5">
-                <span className="text-sm text-accent-sage">Price modifier</span>
+                <span className="text-sm text-accent-sage">Price multiplier</span>
                 <span
-                  className={`text-md font-bold ${z.priceModifier === 0 ? 'text-accent-sage' : 'text-accent-red'}`}
+                  className={`text-md font-bold ${z.priceMultiplier === 1 ? 'text-accent-sage' : 'text-accent-red'}`}
                 >
-                  {z.priceModifier === 0 ? '+€0' : `+€${z.priceModifier}`}
+                  {priceModifier}
                 </span>
               </div>
             </div>

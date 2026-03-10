@@ -1,10 +1,9 @@
 import { useState } from 'react'
+import { promoService } from '#/api/promoService'
 
-type Promo = {
+type PromoResult = {
   code: string
   discountPercentage: number
-  status: 'Active' | 'Inactive'
-  expiryDate: string
 }
 
 type PromoMsg = {
@@ -12,24 +11,9 @@ type PromoMsg = {
   text: string
 }
 
-export const VALID_PROMOS: Promo[] = [
-  {
-    code: 'MONACO10',
-    discountPercentage: 10,
-    status: 'Active',
-    expiryDate: '2026-12-31',
-  },
-  {
-    code: 'F1FAN5',
-    discountPercentage: 5,
-    status: 'Active',
-    expiryDate: '2025-12-31',
-  },
-]
-
 type PromoCodeProps = {
-  appliedPromo: Promo | null
-  setAppliedPromo: React.Dispatch<React.SetStateAction<Promo | null>>
+  appliedPromo: PromoResult | null
+  setAppliedPromo: React.Dispatch<React.SetStateAction<PromoResult | null>>
 }
 
 export default function PromoCode({
@@ -38,30 +22,39 @@ export default function PromoCode({
 }: PromoCodeProps) {
   const [promoInput, setPromoInput] = useState<string>('')
   const [promoMsg, setPromoMsg] = useState<PromoMsg | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  const applyPromo = () => {
-    const promo = VALID_PROMOS.find(
-      (p) => p.code.toUpperCase() === promoInput.toUpperCase(),
-    )
-
-    if (!promo) {
-      setPromoMsg({ ok: false, text: 'Invalid promo code.' })
+  const applyPromo = async () => {
+    if (!promoInput.trim()) {
+      setPromoMsg({ ok: false, text: 'Please enter a promo code.' })
       return
     }
 
-    const today = new Date()
-    const expiry = new Date(promo.expiryDate)
+    setLoading(true)
+    setPromoMsg(null)
 
-    if (promo.status !== 'Active' || expiry < today) {
-      setPromoMsg({ ok: false, text: 'Promo code is expired or inactive.' })
-      return
+    try {
+      const result = await promoService.validate(promoInput.trim())
+      
+      if (!result.isValid) {
+        setPromoMsg({ ok: false, text: result.message || 'Invalid promo code.' })
+        return
+      }
+
+      setAppliedPromo({
+        code: promoInput.trim().toUpperCase(),
+        discountPercentage: result.discountPercentage || 0,
+      })
+      setPromoMsg({
+        ok: true,
+        text: `Promo code applied! ${result.discountPercentage}% off.`,
+      })
+    } catch (error) {
+      console.error('Error validating promo code:', error)
+      setPromoMsg({ ok: false, text: 'Failed to validate promo code. Please try again.' })
+    } finally {
+      setLoading(false)
     }
-
-    setAppliedPromo(promo)
-    setPromoMsg({
-      ok: true,
-      text: `Promo code applied! ${promo.discountPercentage}% off.`,
-    })
   }
 
   const removePromo = () => {
@@ -91,13 +84,14 @@ export default function PromoCode({
             setPromoInput(e.target.value)
             setPromoMsg(null)
           }}
-          disabled={!!appliedPromo}
+          disabled={!!appliedPromo || loading}
         />
         <button
           onClick={appliedPromo ? removePromo : applyPromo}
-          className="cursor-pointer px-5 py-3 border border-accent-sage text-white rounded-md text-sm font-semibold hover:border-accent-sage/50 transition-colors whitespace-nowrap"
+          disabled={loading}
+          className="cursor-pointer px-5 py-3 border border-accent-sage text-white rounded-md text-sm font-semibold hover:border-accent-sage/50 transition-colors whitespace-nowrap disabled:opacity-50"
         >
-          {appliedPromo ? 'Remove' : 'Apply'}
+          {loading ? 'Validating...' : appliedPromo ? 'Remove' : 'Apply'}
         </button>
       </div>
 

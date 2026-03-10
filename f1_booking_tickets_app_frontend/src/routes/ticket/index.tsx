@@ -2,14 +2,12 @@ import { createFileRoute } from '@tanstack/react-router'
 import ManageTicket from '#/components/ManageTicket'
 import FindTicket from '#/components/FindTicket'
 import { useState } from 'react'
-import { MOCK_TICKETS } from '#/components/FindTicket'
+import type { TicketDetails } from '#/model/types'
 
 export const Route = createFileRoute('/ticket/')({ component: App })
 
 function App() {
-  const [ticket, setTicket] = useState<(typeof MOCK_TICKETS)[number] | null>(
-    null,
-  )
+  const [ticket, setTicket] = useState<TicketDetails | null>(null)
 
   return (
     <>

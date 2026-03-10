@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { SUPPORTED_CURRENCIES } from '#/model/types'
 
 export type FieldKey =
   | 'firstName'
@@ -8,6 +9,7 @@ export type FieldKey =
   | 'city'
   | 'country'
   | 'email'
+  | 'emailConfirmation'
   | 'phoneNumber'
 
 export type FormState = Record<FieldKey, string>
@@ -37,15 +39,23 @@ const FIELDS: {
     placeholder: 'john@example.com',
     type: 'email',
   },
-  { key: 'phoneNumber', label: 'Phone Number', placeholder: '+33 123 456 789' }, // <-- added
+  {
+    key: 'emailConfirmation',
+    label: 'Confirm Email',
+    placeholder: 'john@example.com',
+    type: 'email',
+  },
+  { key: 'phoneNumber', label: 'Phone Number', placeholder: '+33 123 456 789' },
 ]
 
 type YourInfoProps = {
   form: FormState
   setForm: React.Dispatch<React.SetStateAction<FormState>>
+  currency: string
+  setCurrency: (currency: string) => void
 }
 
-export default function YourInfo({ form, setForm }: YourInfoProps) {
+export default function YourInfo({ form, setForm, currency, setCurrency }: YourInfoProps) {
   const [errors, setErrors] = useState<ErrorState>({})
 
   const handleChange = (key: FieldKey, value: string) => {
@@ -87,6 +97,24 @@ export default function YourInfo({ form, setForm }: YourInfoProps) {
             )}
           </div>
         ))}
+
+        {/* Currency Dropdown */}
+        <div>
+          <label className="block text-sm text-accent-sage mb-1.5">
+            Currency <span className="text-accent-red">*</span>
+          </label>
+          <select
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+            className="w-full bg-dark-surface border border-accent-sage/70 rounded-md px-3.5 py-3 text-sm text-white outline-none transition-colors focus:border-accent-sage/50"
+          >
+            {SUPPORTED_CURRENCIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.code} - {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
     </section>
   )

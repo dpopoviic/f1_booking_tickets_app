@@ -1,18 +1,40 @@
-import type { RaceDay } from '#/model/types'
+import { useEffect, useState } from 'react'
+import type { Race } from '#/model/types'
+import { raceService } from '#/api/raceService'
 
-type SelectDayProps = {
-  raceDays: RaceDay[]
-  selectedDay: RaceDay | null
-  setSelectedDay: (day: RaceDay) => void
-  loading?: boolean
+type SelectRaceProps = {
+  selectedRace: Race | null
+  setSelectedRace: (race: Race | null) => void
 }
 
-export default function SelectRaceDay({
-  raceDays,
-  selectedDay,
-  setSelectedDay,
-  loading = false,
-}: SelectDayProps) {
+export default function SelectRace({
+  selectedRace,
+  setSelectedRace,
+}: SelectRaceProps) {
+  const [races, setRaces] = useState<Race[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    const fetchRaces = async () => {
+      try {
+        setLoading(true)
+        const data = await raceService.getAll()
+        setRaces(data)
+        // Auto-select first race if only one exists
+        if (data.length === 1) {
+          setSelectedRace(data[0])
+        }
+      } catch (err) {
+        setError('Failed to load races. Please try again.')
+        console.error('Error fetching races:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchRaces()
+  }, [setSelectedRace])
+
   if (loading) {
     return (
       <section className="max-w-5xl mx-auto p-6 bg-transparent rounded-lg">
@@ -20,9 +42,9 @@ export default function SelectRaceDay({
           className="text-4xl font-extrabold uppercase tracking-wide mb-1 text-white"
           style={{ fontFamily: "'Barlow Condensed',sans-serif" }}
         >
-          Select Race Day
+          Select Race
         </h2>
-        <p className="text-md text-accent-sage mb-4">Loading race days...</p>
+        <p className="text-md text-accent-sage mb-4">Loading races...</p>
         <div className="animate-pulse space-y-3">
           <div className="h-20 bg-neutral-800 rounded-lg" />
           <div className="h-20 bg-neutral-800 rounded-lg" />
@@ -31,18 +53,30 @@ export default function SelectRaceDay({
     )
   }
 
-  if (raceDays.length === 0) {
+  if (error) {
     return (
       <section className="max-w-5xl mx-auto p-6 bg-transparent rounded-lg">
         <h2
           className="text-4xl font-extrabold uppercase tracking-wide mb-1 text-white"
           style={{ fontFamily: "'Barlow Condensed',sans-serif" }}
         >
-          Select Race Day
+          Select Race
         </h2>
-        <p className="text-md text-accent-sage mb-4">
-          Please select a race first.
-        </p>
+        <p className="text-red-500 text-sm">{error}</p>
+      </section>
+    )
+  }
+
+  if (races.length === 0) {
+    return (
+      <section className="max-w-5xl mx-auto p-6 bg-transparent rounded-lg">
+        <h2
+          className="text-4xl font-extrabold uppercase tracking-wide mb-1 text-white"
+          style={{ fontFamily: "'Barlow Condensed',sans-serif" }}
+        >
+          Select Race
+        </h2>
+        <p className="text-accent-sage text-sm">No races available at the moment.</p>
       </section>
     )
   }
@@ -53,25 +87,21 @@ export default function SelectRaceDay({
         className="text-4xl font-extrabold uppercase tracking-wide mb-1 text-white"
         style={{ fontFamily: "'Barlow Condensed',sans-serif" }}
       >
-        Select Race Day
+        Select Race
       </h2>
       <p className="text-md text-accent-sage mb-4">
-        Choose the day you want to attend.
+        Choose the Grand Prix you want to attend.
       </p>
+
       <div className="space-y-3">
-        {raceDays.map((d) => {
-          const active = selectedDay?.raceDayId === d.raceDayId
-          const dateStr = new Date(d.date).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-          })
+        {races.map((race) => {
+          const active = selectedRace?.raceId === race.raceId
           return (
             <div
-              key={d.raceDayId}
-              onClick={() => setSelectedDay(d)}
+              key={race.raceId}
+              onClick={() => setSelectedRace(race)}
               className={`flex items-center justify-between px-5 py-4 border rounded-lg cursor-pointer transition-all duration-200
-                      ${active ? 'border-accent-red bg-accent-red/10' : 'border-accent-sage/30  hover:border-accent-sage/50'}`}
+                ${active ? 'border-accent-red bg-accent-red/10' : 'border-accent-sage/30 hover:border-accent-sage/50'}`}
             >
               <div className="flex items-center gap-3">
                 <div
@@ -84,18 +114,15 @@ export default function SelectRaceDay({
                 </div>
                 <div>
                   <div className="text-lg font-semibold text-white">
-                    {d.name}
+                    {race.name}
                   </div>
-                  <div className="text-md text-accent-sage">
-                    {d.description}
-                  </div>
+                  <div className="text-md text-accent-sage">{race.location}</div>
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-md font-bold text-white">
-                  €{d.dayPrice}
+                  from €{race.basePrice}
                 </div>
-                <div className="text-xs text-accent-sage">{dateStr}</div>
               </div>
             </div>
           )

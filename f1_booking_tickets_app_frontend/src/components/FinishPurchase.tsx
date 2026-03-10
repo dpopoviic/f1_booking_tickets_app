@@ -1,24 +1,38 @@
-import { VALID_PROMOS } from './PromoCode'
-import { RACE_DAYS } from './SelectRaceDay'
-import { SEATING_ZONES } from './SelectSeat'
+import type { RaceDay, SeatingZone, Race } from '#/model/types'
+
+type AppliedPromo = {
+  code: string
+  discountPercentage: number
+} | null
 
 type FinishPurchaseProps = {
-  selectedDay: (typeof RACE_DAYS)[number] | null
-  selectedZone: (typeof SEATING_ZONES)[number] | null
-  appliedPromo: (typeof VALID_PROMOS)[number] | null
+  race: Race | null
+  selectedDay: RaceDay | null
+  selectedZone: SeatingZone | null
+  appliedPromo: AppliedPromo
+  currency: string
   handleSubmit: () => void
+  loading?: boolean
 }
 
 export default function FinishPurchase({
+  race,
   selectedDay,
   selectedZone,
   appliedPromo,
+  currency,
   handleSubmit,
+  loading = false,
 }: FinishPurchaseProps) {
-  const basePrice =
-    selectedDay && selectedZone
-      ? selectedDay.dayPrice + selectedZone.priceModifier
-      : 0
+  // Calculate price: basePrice from race + dayPrice + (basePrice * priceMultiplier)
+  const calculatePrice = () => {
+    if (!race || !selectedDay || !selectedZone) return 0
+    const dayPrice = selectedDay.dayPrice
+    const zoneMultiplier = selectedZone.priceMultiplier
+    return dayPrice * zoneMultiplier
+  }
+
+  const basePrice = calculatePrice()
   const discount = appliedPromo
     ? (basePrice * appliedPromo.discountPercentage) / 100
     : 0
@@ -40,14 +54,14 @@ export default function FinishPurchase({
               {selectedDay.name} — {selectedZone.name}
             </span>
             <span>
-              €{(selectedDay.dayPrice + selectedZone.priceModifier).toFixed(2)}
+              {currency === 'EUR' ? '€' : currency}{basePrice.toFixed(2)}
             </span>
           </div>
 
           {appliedPromo && (
             <div className="flex justify-between text-sm text-green-500 mb-2">
               <span>Promo ({appliedPromo.code})</span>
-              <span>-€{discount.toFixed(2)}</span>
+              <span>-{currency === 'EUR' ? '€' : currency}{discount.toFixed(2)}</span>
             </div>
           )}
 
@@ -58,7 +72,7 @@ export default function FinishPurchase({
               className="text-2xl font-extrabold text-white"
               style={{ fontFamily: "'Barlow Condensed',sans-serif" }}
             >
-              €{total.toFixed(2)}
+              {currency === 'EUR' ? '€' : currency}{total.toFixed(2)}
             </span>
           </div>
         </>
@@ -70,16 +84,17 @@ export default function FinishPurchase({
 
       <button
         onClick={handleSubmit}
-        className="w-full py-3.5 rounded-md text-md cursor-pointer font-semibold text-white transition-all duration-200"
+        disabled={loading || !selectedDay || !selectedZone}
+        className="w-full py-3.5 rounded-md text-md cursor-pointer font-semibold text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         style={{ backgroundColor: '#E8102A' }}
         onMouseEnter={(e) =>
-          (e.currentTarget.style.backgroundColor = '#b50d22')
+          !loading && (e.currentTarget.style.backgroundColor = '#b50d22')
         }
         onMouseLeave={(e) =>
-          (e.currentTarget.style.backgroundColor = '#E8102A')
+          !loading && (e.currentTarget.style.backgroundColor = '#E8102A')
         }
       >
-        Complete Purchase
+        {loading ? 'Processing...' : 'Complete Purchase'}
       </button>
     </section>
   )

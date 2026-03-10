@@ -1,4 +1,3 @@
-// ============ Race ============
 export interface Race {
   raceId: number
   name: string
@@ -12,7 +11,6 @@ export interface RaceDetails extends Race {
   seatingZones: SeatingZone[]
 }
 
-// ============ RaceDay ============
 export interface RaceDay {
   raceDayId: number
   raceId: number
@@ -23,7 +21,6 @@ export interface RaceDay {
   capacity: number
 }
 
-// ============ SeatingZone ============
 export interface SeatingZone {
   seatingZoneId: number
   raceId: number
@@ -32,7 +29,6 @@ export interface SeatingZone {
   capacity: number
 }
 
-// ============ Ticket Purchase ============
 export interface PurchaseTicketItem {
   raceDayId: number
   zoneId: number
@@ -59,7 +55,6 @@ export interface PurchaseTicketResponse {
   discountApplied: number
 }
 
-// ============ Ticket Details ============
 export interface TicketRaceDayItem {
   raceDayId: number
   raceDayName: string
@@ -87,7 +82,6 @@ export interface TicketDetails {
   items: TicketRaceDayItem[]
 }
 
-// ============ Ticket Modification ============
 export interface ModifyTicketRequest {
   ticketCode: string
   email: string
@@ -100,7 +94,6 @@ export interface CancelTicketRequest {
   email: string
 }
 
-// ============ PromoCode ============
 export interface ValidatePromoRequest {
   code: string
 }
@@ -111,7 +104,6 @@ export interface ValidatePromoResponse {
   message?: string
 }
 
-// ============ Currency ============
 export interface Currency {
   currencyId: number
   name: string

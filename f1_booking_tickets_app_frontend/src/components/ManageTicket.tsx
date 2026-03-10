@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { MOCK_TICKETS } from './FindTicket'
+import type { TicketDetails } from '#/model/types'
+import { ticketService } from '#/api/ticketService'
 import {
   CopiedIcon,
   CopyIcon,
@@ -10,27 +11,42 @@ import {
 } from '#/components/icons/Icons'
 
 type ManageTicketProps = {
-  ticket: (typeof MOCK_TICKETS)[number]
+  ticket: TicketDetails
   onBack: () => void
 }
 
 export default function ManageTicket({ ticket, onBack }: ManageTicketProps) {
-  const [copied, setCopied] = useState(null)
+  const [copied, setCopied] = useState<string | null>(null)
   const [cancelled, setCancelled] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [currentTicket, setCurrentTicket] = useState(ticket)
+  const [cancelling, setCancelling] = useState(false)
 
-  const copy = (val: any, key: any) => {
+  const copy = (val: string, key: string) => {
     navigator.clipboard.writeText(val).then(() => {
       setCopied(key)
       setTimeout(() => setCopied(null), 2000)
     })
   }
 
-  const handleCancel = () => {
-    setCancelled(true)
-    setShowConfirm(false)
-    setCurrentTicket((t) => ({ ...t, isActive: false }))
+  const currencyPrefix = currentTicket.currencyCode === 'EUR' ? '€' : currentTicket.currencyCode
+
+  const handleCancel = async () => {
+    setCancelling(true)
+    try {
+      await ticketService.cancel({
+        ticketCode: currentTicket.ticketCode,
+        email: currentTicket.email,
+      })
+      setCancelled(true)
+      setShowConfirm(false)
+      setCurrentTicket((t) => ({ ...t, isActive: false }))
+    } catch (error) {
+      console.error('Error cancelling ticket:', error)
+      alert('Failed to cancel ticket. Please try again.')
+    } finally {
+      setCancelling(false)
+    }
   }
 
   return (
@@ -49,10 +65,10 @@ export default function ManageTicket({ ticket, onBack }: ManageTicketProps) {
         <div className="flex items-start justify-between mb-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-accent-sage mb-1">
-              Ticket ID
+              Ticket Code
             </p>
             <p className="text-sm font-mono text-white">
-              {currentTicket.ticketId}
+              {currentTicket.ticketCode}
             </p>
           </div>
           <span
@@ -87,30 +103,35 @@ export default function ManageTicket({ ticket, onBack }: ManageTicketProps) {
               Access Code
             </p>
             <p className="text-xl font-bold font-mono tracking-widest text-white">
-              {currentTicket.accessCode}
+              {currentTicket.ticketCode}
             </p>
           </div>
           <button
-            onClick={() => copy(currentTicket.accessCode, 'access')}
+            onClick={() => copy(currentTicket.ticketCode, 'access')}
             className="text-accent-sage hover:text-neutral-200 transition-colors p-1"
           >
             {copied === 'access' ? <CopiedIcon /> : <CopyIcon />}
           </button>
         </div>
 
-        {currentTicket.promoCode && (
+        {currentTicket.generatedPromoCode && (
           <div className="border border-accent-red/50 bg-red-950/20 rounded-md px-4 py-3 flex items-center justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-accent-sage mb-1">
-                Your Promo Code ({currentTicket.promoCode.discountPercentage}%
-                OFF)
+                Your Promo Code
               </p>
+              {currentTicket.discountApplied > 0 && (
+                <p className="text-xs text-green-400 mb-1">
+                  Discount applied: {currencyPrefix}{' '}
+                  {currentTicket.discountApplied.toFixed(2)}
+                </p>
+              )}
               <p className="text-xl font-bold font-mono tracking-widest text-accent-red">
-                {currentTicket.promoCode.code}
+                {currentTicket.generatedPromoCode}
               </p>
             </div>
             <button
-              onClick={() => copy(currentTicket.promoCode.code, 'promo')}
+              onClick={() => copy(currentTicket.generatedPromoCode, 'promo')}
               className="accent-sage hover:text-neutral-200 transition-colors p-1"
             >
               {copied === 'promo' ? <CopiedIcon /> : <CopyIcon />}
@@ -144,7 +165,7 @@ export default function ManageTicket({ ticket, onBack }: ManageTicketProps) {
         </div>
 
         <div className="space-y-3">
-          {currentTicket.raceDays.map((rd, i) => (
+          {currentTicket.items.map((rd, i) => (
             <div
               key={i}
               className="flex items-center justify-between py-3 border-b border-neutral-800 last:border-b-0"
@@ -154,14 +175,14 @@ export default function ManageTicket({ ticket, onBack }: ManageTicketProps) {
                   <CalendarIcon />
                 </div>
                 <div>
-                  <p className="text-lg font-semibold text-white">{rd.name}</p>
+                  <p className="text-lg font-semibold text-white">{rd.raceDayName}</p>
                   <p className="flex items-center gap-1 text-xs text-accent-sage mt-0.5">
-                    <PinIcon /> {rd.zone}
+                    <PinIcon /> {rd.zoneName}
                   </p>
                 </div>
               </div>
               <p className="text-md text-white font-bold">
-                €{rd.price.toFixed(2)}
+                {currencyPrefix} {rd.price.toFixed(2)}
               </p>
             </div>
           ))}
@@ -176,7 +197,7 @@ export default function ManageTicket({ ticket, onBack }: ManageTicketProps) {
             className="text-2xl font-extrabold text-white"
             style={{ fontFamily: "'Barlow Condensed',sans-serif" }}
           >
-            €{currentTicket.total.toFixed(2)} EUR
+            {currencyPrefix} {currentTicket.totalPrice.toFixed(2)}
           </span>
         </div>
       </div>
@@ -227,22 +248,24 @@ export default function ManageTicket({ ticket, onBack }: ManageTicketProps) {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowConfirm(false)}
-                className="flex-1 py-2.5 border border-neutral-700 rounded-md text-sm font-semibold text-neutral-100 hover:border-neutral-500 transition-colors"
+                disabled={cancelling}
+                className="flex-1 py-2.5 border border-neutral-700 rounded-md text-sm font-semibold text-neutral-100 hover:border-neutral-500 transition-colors disabled:opacity-50"
               >
                 Keep Ticket
               </button>
               <button
                 onClick={handleCancel}
-                className="flex-1 py-2.5 rounded-md text-sm font-semibold text-white transition-colors"
+                disabled={cancelling}
+                className="flex-1 py-2.5 rounded-md text-sm font-semibold text-white transition-colors disabled:opacity-50"
                 style={{ backgroundColor: '#E8102A' }}
                 onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor = '#b50d22')
+                  !cancelling && (e.currentTarget.style.backgroundColor = '#b50d22')
                 }
                 onMouseLeave={(e) =>
-                  (e.currentTarget.style.backgroundColor = '#E8102A')
+                  !cancelling && (e.currentTarget.style.backgroundColor = '#E8102A')
                 }
               >
-                Yes, Cancel
+                {cancelling ? 'Cancelling...' : 'Yes, Cancel'}
               </button>
             </div>
           </div>
