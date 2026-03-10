@@ -63,9 +63,11 @@ namespace f1_booking_tickets_API.HostedServices
 
                 using var scope = _serviceScopeFactory.CreateScope();
                 var ticketPurchaseService = scope.ServiceProvider.GetRequiredService<ITicketPurchaseService>();
+                var ticketService = scope.ServiceProvider.GetRequiredService<ITicketService>();
 
                 var purchaseRequest = requestMessage.ToTicketPurchaseRequest();
                 var ticket = await ticketPurchaseService.PurchaseAsync(purchaseRequest);
+                var detailedTicket = await ticketService.GetByIdAsync(ticket.TicketId);
 
                 var ticketEvent = new TicketEvent
                 {
@@ -78,7 +80,8 @@ namespace f1_booking_tickets_API.HostedServices
                         Email = ticket.Email,
                         Country = ticket.Country,
                         TotalPrice = ticket.TotalPrice,
-                        PurchasedAt = ticket.PurchaseDate
+                        PurchasedAt = detailedTicket?.PurchaseDate ?? ticket.PurchaseDate,
+                        RaceDays = MapRaceDays(detailedTicket)
                     })
                 };
 
@@ -113,8 +116,12 @@ namespace f1_booking_tickets_API.HostedServices
 
                 using var scope = _serviceScopeFactory.CreateScope();
                 var ticketModificationService = scope.ServiceProvider.GetRequiredService<ITicketModificationService>();
+                var ticketService = scope.ServiceProvider.GetRequiredService<ITicketService>();
 
                 Ticket ticket;
+                string raceDayName = string.Empty;
+                string raceDayDate = string.Empty;
+                Ticket? ticketBeforeChange = null;
 
                 if (requestMessage.ModificationType == "AddDay")
                 {
@@ -129,13 +136,36 @@ namespace f1_booking_tickets_API.HostedServices
                         requestMessage.Email,
                         requestMessage.RaceDayId,
                         requestMessage.ZoneId.Value);
+
+                    var detailedTicket = await ticketService.GetByIdAsync(ticket.TicketId);
+                    var raceDayInfo = detailedTicket?.TicketRaceDays
+                        .FirstOrDefault(trd => trd.RaceDayId == requestMessage.RaceDayId)?.RaceDay;
+
+                    if (raceDayInfo != null)
+                    {
+                        raceDayName = raceDayInfo.Name;
+                        raceDayDate = raceDayInfo.Date.ToString("yyyy-MM-dd");
+                    }
                 }
                 else if (requestMessage.ModificationType == "RemoveDay")
                 {
+                    ticketBeforeChange = await ticketService.GetByCodeAndEmailAsync(
+                        requestMessage.TicketCode,
+                        requestMessage.Email);
+
                     ticket = await ticketModificationService.RemoveRaceDayAsync(
                         requestMessage.TicketCode,
                         requestMessage.Email,
                         requestMessage.RaceDayId);
+
+                    var removedDayInfo = ticketBeforeChange?.TicketRaceDays
+                        .FirstOrDefault(trd => trd.RaceDayId == requestMessage.RaceDayId)?.RaceDay;
+
+                    if (removedDayInfo != null)
+                    {
+                        raceDayName = removedDayInfo.Name;
+                        raceDayDate = removedDayInfo.Date.ToString("yyyy-MM-dd");
+                    }
                 }
                 else
                 {
@@ -153,6 +183,8 @@ namespace f1_booking_tickets_API.HostedServices
                         TicketCode = ticket.TicketCode,
                         ModificationType = requestMessage.ModificationType,
                         RaceDayId = requestMessage.RaceDayId,
+                        RaceDayName = raceDayName,
+                        RaceDayDate = raceDayDate,
                         ModifiedAt = ticket.UpdatedAt
                     })
                 };
@@ -195,6 +227,8 @@ namespace f1_booking_tickets_API.HostedServices
                     return;
                 }
 
+                var raceDays = MapRaceDays(ticket);
+
                 await ticketService.CancelAsync(requestMessage.TicketCode, requestMessage.Email);
 
                 var ticketEvent = new TicketEvent
@@ -205,7 +239,8 @@ namespace f1_booking_tickets_API.HostedServices
                     {
                         TicketId = ticket.TicketId,
                         TicketCode = ticket.TicketCode,
-                        CancelledAt = DateTime.UtcNow
+                        CancelledAt = DateTime.UtcNow,
+                        RaceDays = raceDays
                     })
                 };
 
@@ -225,6 +260,23 @@ namespace f1_booking_tickets_API.HostedServices
         {
             _logger.LogInformation("Ticket Processing Background Worker stopping");
             await base.StopAsync(stoppingToken);
+        }
+
+        private static List<TicketRaceDayInfo> MapRaceDays(Ticket? ticket)
+        {
+            if (ticket == null)
+            {
+                return new List<TicketRaceDayInfo>();
+            }
+
+            return ticket.TicketRaceDays
+                .Select(trd => new TicketRaceDayInfo
+                {
+                    RaceDayId = trd.RaceDayId,
+                    RaceDayName = trd.RaceDay?.Name ?? string.Empty,
+                    RaceDayDate = trd.RaceDay?.Date.ToString("yyyy-MM-dd") ?? string.Empty
+                })
+                .ToList();
         }
     }
 }

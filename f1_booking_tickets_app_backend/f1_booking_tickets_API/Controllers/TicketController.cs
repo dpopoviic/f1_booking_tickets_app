@@ -1,4 +1,6 @@
 using f1_booking_tickets.Services.If;
+using f1_booking_tickets.Domain.Entities;
+using f1_booking_tickets.Domain.Events;
 using f1_booking_tickets_API.Configuration;
 using f1_booking_tickets_API.DTOs.Ticket;
 using f1_booking_tickets_API.Messages;
@@ -39,8 +41,10 @@ namespace f1_booking_tickets_API.Controllers
             {
                 var request = dto.ToTicketPurchaseRequest();
                 var ticket = await _ticketPurchaseService.PurchaseAsync(request);
+                var ticketWithDetails = await _ticketService.GetByIdAsync(ticket.TicketId);
+                await PublishTicketPurchasedEventAsync(ticket.TicketId);
 
-                return Ok(ticket.ToPurchaseTicketResponseDTO());
+                return Ok((ticketWithDetails ?? ticket).ToPurchaseTicketResponseDTO());
             }
             catch (InvalidOperationException ex)
             {
@@ -109,6 +113,19 @@ namespace f1_booking_tickets_API.Controllers
                     dto.RaceDayId, 
                     dto.ZoneId);
 
+                var ticketWithDetails = await _ticketService.GetByIdAsync(ticket.TicketId);
+                var raceDayInfo = ticketWithDetails?.TicketRaceDays
+                    .FirstOrDefault(trd => trd.RaceDayId == dto.RaceDayId)?.RaceDay;
+
+                await PublishTicketModifiedEventAsync(
+                    ticket.TicketId,
+                    ticket.TicketCode,
+                    "AddDay",
+                    dto.RaceDayId,
+                    ticket.UpdatedAt,
+                    raceDayInfo?.Name,
+                    raceDayInfo?.Date.ToString("yyyy-MM-dd"));
+
                 return Ok(ticket.ToGetTicketDetailsDTO());
             }
             catch (InvalidOperationException ex)
@@ -152,10 +169,23 @@ namespace f1_booking_tickets_API.Controllers
         {
             try
             {
+                var ticketBeforeChange = await _ticketService.GetByCodeAndEmailAsync(dto.TicketCode, dto.Email);
+                var removedDayInfo = ticketBeforeChange?.TicketRaceDays
+                    .FirstOrDefault(trd => trd.RaceDayId == dto.RaceDayId)?.RaceDay;
+
                 var ticket = await _ticketModificationService.RemoveRaceDayAsync(
                     dto.TicketCode, 
                     dto.Email, 
                     dto.RaceDayId);
+
+                await PublishTicketModifiedEventAsync(
+                    ticket.TicketId,
+                    ticket.TicketCode,
+                    "RemoveDay",
+                    dto.RaceDayId,
+                    ticket.UpdatedAt,
+                    removedDayInfo?.Name,
+                    removedDayInfo?.Date.ToString("yyyy-MM-dd"));
 
                 return Ok(ticket.ToGetTicketDetailsDTO());
             }
@@ -199,7 +229,14 @@ namespace f1_booking_tickets_API.Controllers
         {
             try
             {
+                var existingTicket = await _ticketService.GetByCodeAndEmailAsync(dto.TicketCode, dto.Email);
                 await _ticketService.CancelAsync(dto.TicketCode, dto.Email);
+
+                if (existingTicket != null)
+                {
+                    await PublishTicketCancelledEventAsync(existingTicket);
+                }
+
                 return NoContent();
             }
             catch (InvalidOperationException ex)
@@ -233,6 +270,106 @@ namespace f1_booking_tickets_API.Controllers
                 _logger.LogError(ex, "Error queueing cancel ticket request");
                 return StatusCode(500, "Failed to queue cancel ticket request");
             }
+        }
+
+        private async Task PublishTicketPurchasedEventAsync(int ticketId)
+        {
+            var ticket = await _ticketService.GetByIdAsync(ticketId);
+            if (ticket == null)
+            {
+                return;
+            }
+
+            var ticketEvent = new TicketEvent
+            {
+                EventType = "TicketPurchased",
+                EventDate = DateTime.UtcNow,
+                Data = JsonSerializer.Serialize(new TicketPurchasedEventData
+                {
+                    TicketId = ticket.TicketId,
+                    TicketCode = ticket.TicketCode,
+                    Email = ticket.Email,
+                    Country = ticket.Country,
+                    TotalPrice = ticket.TotalPrice,
+                    PurchasedAt = ticket.PurchaseDate,
+                    RaceDays = MapRaceDays(ticket)
+                })
+            };
+
+            await PublishTicketEventAsync(ticketEvent);
+        }
+
+        private async Task PublishTicketModifiedEventAsync(
+            int ticketId,
+            string ticketCode,
+            string modificationType,
+            int raceDayId,
+            DateTime modifiedAt,
+            string? raceDayName,
+            string? raceDayDate)
+        {
+            var ticketEvent = new TicketEvent
+            {
+                EventType = "TicketModified",
+                EventDate = DateTime.UtcNow,
+                Data = JsonSerializer.Serialize(new TicketModifiedEventData
+                {
+                    TicketId = ticketId,
+                    TicketCode = ticketCode,
+                    ModificationType = modificationType,
+                    RaceDayId = raceDayId,
+                    RaceDayName = raceDayName ?? string.Empty,
+                    RaceDayDate = raceDayDate ?? string.Empty,
+                    ModifiedAt = modifiedAt
+                })
+            };
+
+            await PublishTicketEventAsync(ticketEvent);
+        }
+
+        private async Task PublishTicketCancelledEventAsync(Ticket ticket)
+        {
+            var ticketEvent = new TicketEvent
+            {
+                EventType = "TicketCancelled",
+                EventDate = DateTime.UtcNow,
+                Data = JsonSerializer.Serialize(new TicketCancelledEventData
+                {
+                    TicketId = ticket.TicketId,
+                    TicketCode = ticket.TicketCode,
+                    CancelledAt = DateTime.UtcNow,
+                    RaceDays = MapRaceDays(ticket)
+                })
+            };
+
+            await PublishTicketEventAsync(ticketEvent);
+        }
+
+        private async Task PublishTicketEventAsync(TicketEvent ticketEvent)
+        {
+            try
+            {
+                var subscriber = _connectionMultiplexer.GetSubscriber();
+                await subscriber.PublishAsync(
+                    RedisChannel.Literal(RedisQueueNames.TicketEventsChannel),
+                    JsonSerializer.Serialize(ticketEvent));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Ticket operation succeeded but event publish failed: {EventType}", ticketEvent.EventType);
+            }
+        }
+
+        private static List<TicketRaceDayInfo> MapRaceDays(Ticket ticket)
+        {
+            return ticket.TicketRaceDays
+                .Select(trd => new TicketRaceDayInfo
+                {
+                    RaceDayId = trd.RaceDayId,
+                    RaceDayName = trd.RaceDay?.Name ?? string.Empty,
+                    RaceDayDate = trd.RaceDay?.Date.ToString("yyyy-MM-dd") ?? string.Empty
+                })
+                .ToList();
         }
     }
 }

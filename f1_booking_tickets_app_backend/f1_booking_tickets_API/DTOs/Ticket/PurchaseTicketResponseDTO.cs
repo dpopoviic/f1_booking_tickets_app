@@ -18,7 +18,7 @@ namespace f1_booking_tickets_API.DTOs.Ticket
                 TicketCode = ticket.TicketCode,
                 GeneratedPromoCode = ticket.CreatedPromoCode?.Code ?? string.Empty,
                 TotalPrice = ticket.TotalPrice,
-                Currency = ticket.Currency.Code,
+                Currency = ticket.Currency?.Code ?? string.Empty,
                 DiscountApplied = ticket.DiscountApplied
             };
         }

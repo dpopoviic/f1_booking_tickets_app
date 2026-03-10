@@ -27,9 +27,13 @@ namespace f1_booking_tickets.Services
             if (request.Email != request.EmailConfirmation)
                 throw new InvalidOperationException("Email addresses do not match");
 
-            var currency = await _currencyService.GetByCodeAsync(request.CurrencyCode, cancellationToken);
+            var normalizedCurrencyCode = string.IsNullOrWhiteSpace(request.CurrencyCode)
+                ? "EUR"
+                : request.CurrencyCode.Trim().ToUpperInvariant();
+
+            var currency = await _currencyService.GetByCodeAsync(normalizedCurrencyCode, cancellationToken);
             if (currency == null)
-                throw new InvalidOperationException($"Currency {request.CurrencyCode} not supported");
+                throw new InvalidOperationException($"Currency {normalizedCurrencyCode} not supported");
 
             PromoCode? usedPromoCode = null;
             if (!string.IsNullOrWhiteSpace(request.PromoCode))

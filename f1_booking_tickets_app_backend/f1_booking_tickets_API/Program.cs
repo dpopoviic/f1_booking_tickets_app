@@ -42,7 +42,13 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 builder.Services.AddSingleton<ICacheService, RedisCacheService>();
 
 builder.Services.AddHostedService<TicketProcessingBackgroundWorker>();
-
+builder.Services.AddCors(options => {
+    options.AddPolicy("AllowFrontend", policy => {
+        policy.WithOrigins("http://localhost:3000", "http://localhost:5173")
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -55,6 +61,7 @@ else
 {
     app.UseHttpsRedirection();
 }
+app.UseCors("AllowFrontend");
 
 app.UseAuthorization();
 

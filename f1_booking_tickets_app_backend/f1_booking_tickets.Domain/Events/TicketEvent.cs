@@ -15,6 +15,7 @@ namespace f1_booking_tickets.Domain.Events
         public string Country { get; set; } = string.Empty;
         public decimal TotalPrice { get; set; }
         public DateTime PurchasedAt { get; set; }
+        public List<TicketRaceDayInfo> RaceDays { get; set; } = new();
     }
 
     public class TicketModifiedEventData
@@ -23,6 +24,8 @@ namespace f1_booking_tickets.Domain.Events
         public string TicketCode { get; set; } = string.Empty;
         public string ModificationType { get; set; } = string.Empty;
         public int RaceDayId { get; set; }
+        public string RaceDayName { get; set; } = string.Empty;
+        public string RaceDayDate { get; set; } = string.Empty;
         public DateTime ModifiedAt { get; set; }
     }
 
@@ -31,5 +34,13 @@ namespace f1_booking_tickets.Domain.Events
         public int TicketId { get; set; }
         public string TicketCode { get; set; } = string.Empty;
         public DateTime CancelledAt { get; set; }
+        public List<TicketRaceDayInfo> RaceDays { get; set; } = new();
+    }
+
+    public class TicketRaceDayInfo
+    {
+        public int RaceDayId { get; set; }
+        public string RaceDayName { get; set; } = string.Empty;
+        public string RaceDayDate { get; set; } = string.Empty;
     }
 }
