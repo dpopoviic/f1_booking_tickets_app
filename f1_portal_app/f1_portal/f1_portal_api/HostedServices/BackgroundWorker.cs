@@ -88,7 +88,14 @@ namespace f1_portal_api.HostedServices
         }
         private async Task HandleTicketPurchased(Context context, TicketPurchasedEventData eventData)
         {
-            foreach (var raceDay in eventData.RaceDays)
+            var raceDays = eventData.RaceDays ?? new List<TicketRaceDayInfo>();
+
+            if (raceDays.Count == 0)
+            {
+                _logger.LogWarning("TicketPurchased event for TicketId {TicketId} does not include race day data", eventData.TicketId);
+            }
+
+            foreach (var raceDay in raceDays)
             {
                 var existing = await context.TicketsByRaceDay
                     .FirstOrDefaultAsync(x => x.RaceDayId == raceDay.RaceDayId);
@@ -138,6 +145,13 @@ namespace f1_portal_api.HostedServices
 
             if (eventData.ModificationType == "AddDay")
             {
+                if (string.IsNullOrWhiteSpace(eventData.RaceDayName) || string.IsNullOrWhiteSpace(eventData.RaceDayDate))
+                {
+                    _logger.LogWarning(
+                        "TicketModified AddDay for TicketId {TicketId} has missing race day metadata",
+                        eventData.TicketId);
+                }
+
                 if (existing != null)
                 {
                     existing.TicketCount += 1;
@@ -161,13 +175,27 @@ namespace f1_portal_api.HostedServices
                     existing.TicketCount -= 1;
                     context.TicketsByRaceDay.Update(existing);
                 }
+                else
+                {
+                    _logger.LogWarning(
+                        "TicketModified RemoveDay for TicketId {TicketId} ignored because race day {RaceDayId} is missing in report DB",
+                        eventData.TicketId,
+                        eventData.RaceDayId);
+                }
             }
 
             await context.SaveChangesAsync();
         }
         private async Task HandleTicketCancelled(Context context, TicketCancelledEventData eventData)
         {
-            foreach (var raceDay in eventData.RaceDays)
+            var raceDays = eventData.RaceDays ?? new List<TicketRaceDayInfo>();
+
+            if (raceDays.Count == 0)
+            {
+                _logger.LogWarning("TicketCancelled event for TicketId {TicketId} does not include race day data", eventData.TicketId);
+            }
+
+            foreach (var raceDay in raceDays)
             {
                 var existing = await context.TicketsByRaceDay
                     .FirstOrDefaultAsync(x => x.RaceDayId == raceDay.RaceDayId);
