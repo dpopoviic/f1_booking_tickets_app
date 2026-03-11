@@ -1,4 +1,4 @@
-import type { RaceDay, SeatingZone } from '#/model/types'
+import type { Race, RaceDay, SeatingZone } from '#/model/types'
 
 type AppliedPromo = {
   code: string
@@ -14,6 +14,7 @@ type FinishPurchaseProps = {
   selectedItems: SelectedItem[]
   isReadyToSubmit: boolean
   appliedPromo: AppliedPromo
+  selectedRace: Race | null
   currency: string
   exchangeRate: number
   handleSubmit: () => void
@@ -24,19 +25,33 @@ export default function FinishPurchase({
   selectedItems,
   isReadyToSubmit,
   appliedPromo,
+  selectedRace,
   currency,
   exchangeRate,
   handleSubmit,
   loading = false,
 }: FinishPurchaseProps) {
+  const hasEarlyBird =
+    !!selectedRace?.discountDeadline &&
+    new Date() <= new Date(selectedRace.discountDeadline)
+
+  const EARLY_BIRD_PERCENT = 10
+
   const subTotal = selectedItems.reduce((sum, item) => {
     return sum + item.day.dayPrice * item.zone.priceMultiplier * exchangeRate
   }, 0)
 
-  const discount = appliedPromo
-    ? (subTotal * appliedPromo.discountPercentage) / 100
+  const earlyBirdDiscount = hasEarlyBird
+    ? (subTotal * EARLY_BIRD_PERCENT) / 100
     : 0
-  const total = subTotal - discount
+
+  const afterEarlyBird = subTotal - earlyBirdDiscount
+
+  const promoDiscount = appliedPromo
+    ? (afterEarlyBird * appliedPromo.discountPercentage) / 100
+    : 0
+
+  const total = afterEarlyBird - promoDiscount
 
   return (
     <section className="border border-dark-extreme rounded-lg p-5 max-w-5xl mx-auto mt-6">
@@ -69,10 +84,17 @@ export default function FinishPurchase({
             })}
           </div>
 
+          {hasEarlyBird && (
+            <div className="flex justify-between text-sm text-green-500 mb-2">
+              <span>Early Bird Discount (-{EARLY_BIRD_PERCENT}%)</span>
+              <span>-{currency === 'EUR' ? '€' : currency}{earlyBirdDiscount.toFixed(2)}</span>
+            </div>
+          )}
+
           {appliedPromo && (
             <div className="flex justify-between text-sm text-green-500 mb-2">
               <span>Promo ({appliedPromo.code})</span>
-              <span>-{currency === 'EUR' ? '€' : currency}{discount.toFixed(2)}</span>
+              <span>-{currency === 'EUR' ? '€' : currency}{promoDiscount.toFixed(2)}</span>
             </div>
           )}
 

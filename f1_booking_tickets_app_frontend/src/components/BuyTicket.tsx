@@ -333,6 +333,7 @@ export default function BuyTicket() {
         selectedItems={selectedItems}
         isReadyToSubmit={isReadyToSubmit}
         appliedPromo={appliedPromo}
+        selectedRace={selectedRace}
         currency={currency}
         exchangeRate={exchangeRate}
         handleSubmit={handleSubmit}
