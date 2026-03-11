@@ -1,24 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { raceService } from '#/api/raceService'
+import { seatingZoneService } from '#/api/seatingZoneService'
+import type { Race, SeatingZone } from '#/model/types'
 import { RedBtn, Field, Input } from './SharedUI'
 import { PlusIcon, EditIcon, TrashIcon } from './icons/Icons'
 import { Modal, ConfirmDelete } from './Modal'
 
-type Zone = {
-  id: number
-  name: string
-  capacity: number
-  available: number
-  priceModifier: number
-  characteristics: string
-}
-
 type ZoneForm = {
-  id?: number
+  seatingZoneId?: number
   name: string
   capacity: number | string
-  available: number | string
-  priceModifier: number | string
-  characteristics: string
+  priceMultiplier: number | string
 }
 
 type ModalState = {
@@ -30,89 +22,134 @@ type TabProps = {
   showToast: (msg: string) => void
 }
 
-const INIT_ZONES: Zone[] = [
-  {
-    id: 1,
-    name: 'VIP Grandstand',
-    capacity: 100,
-    available: 98,
-    priceModifier: 50,
-    characteristics: 'Premium view, hospitality included',
-  },
-  {
-    id: 2,
-    name: 'General Admission',
-    capacity: 500,
-    available: 497,
-    priceModifier: 0,
-    characteristics: 'Great atmosphere',
-  },
-]
-
 export function TabZones({ showToast }: TabProps) {
-  const [zones, setZones] = useState<Zone[]>(INIT_ZONES)
+  const [races, setRaces] = useState<Race[]>([])
+  const [selectedRaceId, setSelectedRaceId] = useState<number | null>(null)
+  const [zones, setZones] = useState<SeatingZone[]>([])
+  const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState<ModalState>(null)
-  const [deleteTarget, setDeleteTarget] = useState<Zone | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<SeatingZone | null>(null)
+
+  const loadRaces = async () => {
+    try {
+      const data = await raceService.getAll()
+      setRaces(data)
+
+      if (data.length === 0) {
+        setSelectedRaceId(null)
+        setZones([])
+        return
+      }
+
+      setSelectedRaceId((current) => {
+        if (current && data.some((r) => r.raceId === current)) return current
+        return data[0].raceId
+      })
+    } catch (error) {
+      console.error('Failed to fetch races:', error)
+      showToast('Failed to load races.')
+    }
+  }
+
+  const loadZones = async (raceId: number) => {
+    setLoading(true)
+    try {
+      const data = await seatingZoneService.getByRaceId(raceId)
+      setZones(data)
+    } catch (error) {
+      console.error('Failed to fetch zones:', error)
+      setZones([])
+      showToast('Failed to load zones.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadRaces()
+  }, [])
+
+  useEffect(() => {
+    if (!selectedRaceId) {
+      setLoading(false)
+      setZones([])
+      return
+    }
+    loadZones(selectedRaceId)
+  }, [selectedRaceId])
 
   const openAdd = () =>
     setModal({
       mode: 'add',
+      data: { name: '', capacity: '', priceMultiplier: '' },
+    })
+
+  const openEdit = (z: SeatingZone) =>
+    setModal({
+      mode: 'edit',
       data: {
-        name: '',
-        capacity: '',
-        available: '',
-        priceModifier: '',
-        characteristics: '',
+        seatingZoneId: z.seatingZoneId,
+        name: z.name,
+        capacity: z.capacity,
+        priceMultiplier: z.priceMultiplier,
       },
     })
 
-  const openEdit = (z: Zone) =>
-    setModal({
-      mode: 'edit',
-      data: { ...z },
-    })
-
-  const handleSave = () => {
-    if (!modal) return
+  const handleSave = async () => {
+    if (!modal || !selectedRaceId) return
     if (!modal.data.name) return
 
-    const parsed: Zone = {
-      id: modal.data.id ?? Date.now(),
-      name: modal.data.name,
-      capacity: Number(modal.data.capacity),
-      available: Number(modal.data.available),
-      priceModifier: Number(modal.data.priceModifier),
-      characteristics: modal.data.characteristics,
-    }
+    try {
+      if (modal.mode === 'add') {
+        await seatingZoneService.create({
+          raceId: selectedRaceId,
+          name: modal.data.name,
+          capacity: Number(modal.data.capacity),
+          priceMultiplier: Number(modal.data.priceMultiplier),
+        })
+        showToast('Zone added!')
+      } else {
+        await seatingZoneService.update({
+          zoneId: Number(modal.data.seatingZoneId),
+          name: modal.data.name,
+          capacity: Number(modal.data.capacity),
+          priceMultiplier: Number(modal.data.priceMultiplier),
+        })
+        showToast('Zone updated!')
+      }
 
-    if (modal.mode === 'add') {
-      setZones((p) => [...p, parsed])
-      showToast('Zone added!')
-    } else {
-      setZones((p) => p.map((z) => (z.id === parsed.id ? parsed : z)))
-      showToast('Zone updated!')
+      setModal(null)
+      await loadZones(selectedRaceId)
+    } catch (error) {
+      console.error('Failed to save zone:', error)
+      showToast('Failed to save zone.')
     }
-
-    setModal(null)
   }
 
-  const handleDelete = () => {
-    if (!deleteTarget) return
+  const handleDelete = async () => {
+    if (!deleteTarget || !selectedRaceId) return
 
-    setZones((p) => p.filter((z) => z.id !== deleteTarget.id))
-    setDeleteTarget(null)
-    showToast('Zone deleted.')
+    try {
+      await seatingZoneService.delete(deleteTarget.seatingZoneId)
+      setDeleteTarget(null)
+      showToast('Zone deleted.')
+      await loadZones(selectedRaceId)
+    } catch (error) {
+      console.error('Failed to delete zone:', error)
+      showToast('Failed to delete zone.')
+    }
   }
 
-  const set = (k: keyof ZoneForm) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setModal((p) =>
-      p
-        ? {
-            ...p,
-            data: { ...p.data, [k]: e.target.value },
-          }
-        : p,
-    )
+  const set =
+    (k: keyof ZoneForm) => (e: React.ChangeEvent<HTMLInputElement>) =>
+      setModal((p) =>
+        p
+          ? {
+              ...p,
+              data: { ...p.data, [k]: e.target.value },
+            }
+          : p,
+      )
 
   return (
     <div>
@@ -129,150 +166,147 @@ export function TabZones({ showToast }: TabProps) {
         </RedBtn>
       </div>
 
-      <div className="md:hidden space-y-3">
-        {zones.map((z) => (
-          <div
-            key={z.id}
-            className="border border-neutral-800 rounded-lg p-4 bg-neutral-900/40"
-          >
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="font-semibold text-white">{z.name}</h3>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => openEdit(z)}
-                  className="text-neutral-400 hover:text-white"
-                >
-                  <EditIcon />
-                </button>
-
-                <button
-                  onClick={() => setDeleteTarget(z)}
-                  className="text-neutral-400 hover:text-red-400"
-                >
-                  <TrashIcon />
-                </button>
-              </div>
-            </div>
-
-            <div className="text-sm text-neutral-400 space-y-1">
-              <p>
-                <span className="text-neutral-500">Capacity:</span> {z.capacity}
-              </p>
-
-              <p>
-                <span className="text-neutral-500">Available:</span>{' '}
-                <span
-                  className={`font-semibold ${
-                    z.available > 0 ? 'text-green-400' : 'text-red-400'
-                  }`}
-                >
-                  {z.available}
-                </span>
-              </p>
-
-              <p>
-                <span className="text-neutral-500">Price:</span>{' '}
-                {z.priceModifier === 0 ? '+€0' : `+€${z.priceModifier}`}
-              </p>
-
-              <p className="text-neutral-500">{z.characteristics}</p>
-            </div>
-          </div>
-        ))}
-
-        {zones.length === 0 && (
-          <p className="text-center text-neutral-500 py-6">
-            No zones added yet.
-          </p>
-        )}
+      {/* Race selector */}
+      <div className="mb-5">
+        <label className="block text-xs font-semibold uppercase tracking-widest text-neutral-500 mb-1.5">
+          Select Race
+        </label>
+        <select
+          value={selectedRaceId ?? ''}
+          onChange={(e) => setSelectedRaceId(Number(e.target.value) || null)}
+          className="w-full sm:w-64 bg-neutral-900 border border-neutral-700 text-white text-sm rounded-md px-3 py-2 focus:outline-none focus:border-neutral-500"
+        >
+          {races.length === 0 && <option value="">No races available</option>}
+          {races.map((r) => (
+            <option key={r.raceId} value={r.raceId}>
+              {r.name}
+            </option>
+          ))}
+        </select>
       </div>
 
-      <div className="hidden md:block">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-neutral-800">
-              {[
-                'Name',
-                'Capacity',
-                'Available',
-                'Price Modifier',
-                'Characteristics',
-                'Actions',
-              ].map((h) => (
-                <th
-                  key={h}
-                  className="text-left text-xs font-bold uppercase tracking-widest text-neutral-500 pb-3 pr-4"
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
+      {loading && <p className="text-neutral-400">Loading zones...</p>}
 
-          <tbody>
+      {!loading && (
+        <>
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3">
             {zones.map((z) => (
-              <tr
-                key={z.id}
-                className="border-b border-neutral-800/60 hover:bg-neutral-800/20 transition-colors"
+              <div
+                key={z.seatingZoneId}
+                className="border border-neutral-800 rounded-lg p-4 bg-neutral-900/40"
               >
-                <td className="py-3.5 pr-4 font-semibold text-white">
-                  {z.name}
-                </td>
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-semibold text-white">{z.name}</h3>
 
-                <td className="py-3.5 pr-4 text-neutral-400">{z.capacity}</td>
-
-                <td className="py-3.5 pr-4">
-                  <span
-                    className={`font-semibold ${
-                      z.available > 0 ? 'text-green-400' : 'text-red-400'
-                    }`}
-                  >
-                    {z.available}
-                  </span>
-                </td>
-
-                <td className="py-3.5 pr-4 font-semibold text-white">
-                  {z.priceModifier === 0 ? '+€0' : `+€${z.priceModifier}`}
-                </td>
-
-                <td className="py-3.5 pr-4 text-neutral-400">
-                  {z.characteristics}
-                </td>
-
-                <td className="py-3.5">
-                  <div className="flex items-center gap-3">
+                  <div className="flex gap-3">
                     <button
                       onClick={() => openEdit(z)}
-                      className="text-neutral-500 hover:text-neutral-200"
+                      className="text-neutral-400 hover:text-white"
                     >
                       <EditIcon />
                     </button>
 
                     <button
                       onClick={() => setDeleteTarget(z)}
-                      className="text-neutral-500 hover:text-red-400"
+                      className="text-neutral-400 hover:text-red-400"
                     >
                       <TrashIcon />
                     </button>
                   </div>
-                </td>
-              </tr>
+                </div>
+
+                <div className="text-sm text-neutral-400 space-y-1">
+                  <p>
+                    <span className="text-neutral-500">Capacity:</span> {z.capacity}
+                  </p>
+
+                  <p>
+                    <span className="text-neutral-500">Price Multiplier:</span>{' '}
+                    <span className="text-white font-semibold">x{z.priceMultiplier}</span>
+                  </p>
+                </div>
+              </div>
             ))}
 
             {zones.length === 0 && (
-              <tr>
-                <td
-                  colSpan={6}
-                  className="py-8 text-center text-neutral-600 text-sm"
-                >
-                  No zones added yet.
-                </td>
-              </tr>
+              <p className="text-center text-neutral-500 py-6">
+                No zones added yet.
+              </p>
             )}
-          </tbody>
-        </table>
-      </div>
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:block">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-neutral-800">
+                  {['Name', 'Capacity', 'Price Multiplier', 'Actions'].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        className="text-left text-xs font-bold uppercase tracking-widest text-neutral-500 pb-3 pr-4"
+                      >
+                        {h}
+                      </th>
+                    ),
+                  )}
+                </tr>
+              </thead>
+
+              <tbody>
+                {zones.map((z) => (
+                  <tr
+                    key={z.seatingZoneId}
+                    className="border-b border-neutral-800/60 hover:bg-neutral-800/20 transition-colors"
+                  >
+                    <td className="py-3.5 pr-4 font-semibold text-white">
+                      {z.name}
+                    </td>
+
+                    <td className="py-3.5 pr-4 text-neutral-400">
+                      {z.capacity}
+                    </td>
+
+                    <td className="py-3.5 pr-4 font-semibold text-white">
+                      x{z.priceMultiplier}
+                    </td>
+
+                    <td className="py-3.5">
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => openEdit(z)}
+                          className="text-neutral-500 hover:text-neutral-200"
+                        >
+                          <EditIcon />
+                        </button>
+
+                        <button
+                          onClick={() => setDeleteTarget(z)}
+                          className="text-neutral-500 hover:text-red-400"
+                        >
+                          <TrashIcon />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+
+                {zones.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="py-8 text-center text-neutral-600 text-sm"
+                    >
+                      No zones added yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
       {modal && (
         <Modal
@@ -288,40 +322,21 @@ export function TabZones({ showToast }: TabProps) {
             />
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Capacity">
-              <Input
-                type="number"
-                value={modal.data.capacity}
-                onChange={set('capacity')}
-                placeholder="100"
-              />
-            </Field>
-
-            <Field label="Available">
-              <Input
-                type="number"
-                value={modal.data.available}
-                onChange={set('available')}
-                placeholder="98"
-              />
-            </Field>
-          </div>
-
-          <Field label="Price Modifier (€)">
+          <Field label="Capacity">
             <Input
               type="number"
-              value={modal.data.priceModifier}
-              onChange={set('priceModifier')}
-              placeholder="50"
+              value={modal.data.capacity}
+              onChange={set('capacity')}
+              placeholder="100"
             />
           </Field>
 
-          <Field label="Characteristics">
+          <Field label="Price Multiplier">
             <Input
-              value={modal.data.characteristics}
-              onChange={set('characteristics')}
-              placeholder="Premium view, hospitality included"
+              type="number"
+              value={modal.data.priceMultiplier}
+              onChange={set('priceMultiplier')}
+              placeholder="1.5"
             />
           </Field>
         </Modal>
