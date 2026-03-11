@@ -126,7 +126,7 @@ namespace f1_booking_tickets_API.Controllers
                     raceDayInfo?.Name,
                     raceDayInfo?.Date.ToString("yyyy-MM-dd"));
 
-                return Ok(ticket.ToGetTicketDetailsDTO());
+                return Ok((ticketWithDetails ?? ticket).ToGetTicketDetailsDTO());
             }
             catch (InvalidOperationException ex)
             {
@@ -178,6 +178,8 @@ namespace f1_booking_tickets_API.Controllers
                     dto.Email, 
                     dto.RaceDayId);
 
+                var ticketWithDetails = await _ticketService.GetByIdAsync(ticket.TicketId);
+
                 await PublishTicketModifiedEventAsync(
                     ticket.TicketId,
                     ticket.TicketCode,
@@ -187,7 +189,7 @@ namespace f1_booking_tickets_API.Controllers
                     removedDayInfo?.Name,
                     removedDayInfo?.Date.ToString("yyyy-MM-dd"));
 
-                return Ok(ticket.ToGetTicketDetailsDTO());
+                return Ok((ticketWithDetails ?? ticket).ToGetTicketDetailsDTO());
             }
             catch (InvalidOperationException ex)
             {

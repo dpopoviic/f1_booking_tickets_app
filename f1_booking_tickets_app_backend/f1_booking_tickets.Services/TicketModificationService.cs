@@ -77,8 +77,13 @@ namespace f1_booking_tickets.Services
         public async Task<Ticket> RemoveRaceDayAsync(string ticketCode, string email, int raceDayId, CancellationToken cancellationToken = default)
         {
             var ticket = await _context.Tickets
+                .Include(t => t.Currency)
                 .Include(t => t.TicketRaceDays)
                     .ThenInclude(trd => trd.RaceDay)
+                .Include(t => t.TicketRaceDays)
+                    .ThenInclude(trd => trd.SeatingZone)
+                .Include(t => t.CreatedPromoCode)
+                .Include(t => t.UsedPromoCode)
                 .FirstOrDefaultAsync(t => t.TicketCode == ticketCode && t.Email == email, cancellationToken);
 
             if (ticket == null)
