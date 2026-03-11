@@ -4,6 +4,7 @@ namespace f1_booking_tickets.Services.If
     {
         Task<T?> GetRecord<T>(string key);
         Task<bool> SetRecord<T>(string key, T data);
+        Task<bool> SetRecord<T>(string key, T data, TimeSpan expiry);
         Task<bool> DeleteRecord(string key);
     }
 }

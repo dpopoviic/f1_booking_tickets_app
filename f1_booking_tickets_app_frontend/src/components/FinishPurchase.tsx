@@ -15,6 +15,7 @@ type FinishPurchaseProps = {
   isReadyToSubmit: boolean
   appliedPromo: AppliedPromo
   currency: string
+  exchangeRate: number
   handleSubmit: () => void
   loading?: boolean
 }
@@ -24,11 +25,12 @@ export default function FinishPurchase({
   isReadyToSubmit,
   appliedPromo,
   currency,
+  exchangeRate,
   handleSubmit,
   loading = false,
 }: FinishPurchaseProps) {
   const subTotal = selectedItems.reduce((sum, item) => {
-    return sum + item.day.dayPrice * item.zone.priceMultiplier
+    return sum + item.day.dayPrice * item.zone.priceMultiplier * exchangeRate
   }, 0)
 
   const discount = appliedPromo
@@ -49,7 +51,7 @@ export default function FinishPurchase({
         <>
           <div className="space-y-2 mb-2">
             {selectedItems.map((item) => {
-              const linePrice = item.day.dayPrice * item.zone.priceMultiplier
+              const linePrice = item.day.dayPrice * item.zone.priceMultiplier * exchangeRate
 
               return (
                 <div

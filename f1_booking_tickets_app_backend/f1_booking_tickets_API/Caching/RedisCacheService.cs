@@ -31,6 +31,11 @@ namespace f1_booking_tickets_API.Caching
             return Task.FromResult(Database.StringSet(key, JsonSerializer.Serialize(data)));
         }
 
+        public Task<bool> SetRecord<T>(string key, T data, TimeSpan expiry)
+        {
+            return Task.FromResult(Database.StringSet(key, JsonSerializer.Serialize(data), expiry));
+        }
+
         public Task<bool> DeleteRecord(string key)
         {
             return Task.FromResult(Database.KeyDelete(key));

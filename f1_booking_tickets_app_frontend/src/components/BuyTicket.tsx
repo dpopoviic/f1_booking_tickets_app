@@ -11,6 +11,7 @@ import type { Race, RaceDay, SeatingZone, PurchaseTicketResponse } from '#/model
 import { raceDayService } from '#/api/raceDayService'
 import { seatingZoneService } from '#/api/seatingZoneService'
 import { ticketService } from '#/api/ticketService'
+import { currencyService } from '#/api/currencyService'
 
 type AppliedPromo = {
   code: string
@@ -31,6 +32,7 @@ export default function BuyTicket() {
   const [zoneByDayId, setZoneByDayId] = useState<Record<number, number | undefined>>({})
   const [appliedPromo, setAppliedPromo] = useState<AppliedPromo>(null)
   const [currency, setCurrency] = useState('EUR')
+  const [exchangeRate, setExchangeRate] = useState(1)
   
   // Form data
   const [form, setForm] = useState<FormState>({
@@ -82,6 +84,25 @@ export default function BuyTicket() {
 
     fetchData()
   }, [selectedRace])
+
+  useEffect(() => {
+    if (currency === 'EUR') {
+      setExchangeRate(1)
+      return
+    }
+
+    const fetchRate = async () => {
+      try {
+        const data = await currencyService.getExchangeRate('EUR', currency)
+        setExchangeRate(data.rate)
+      } catch (error) {
+        console.error('Error fetching exchange rate:', error)
+        setExchangeRate(1)
+      }
+    }
+
+    fetchRate()
+  }, [currency])
 
   const handleToggleRaceDay = (day: RaceDay) => {
     setSelectedDayIds((currentIds) => {
@@ -313,6 +334,7 @@ export default function BuyTicket() {
         isReadyToSubmit={isReadyToSubmit}
         appliedPromo={appliedPromo}
         currency={currency}
+        exchangeRate={exchangeRate}
         handleSubmit={handleSubmit}
         loading={purchasing}
       />

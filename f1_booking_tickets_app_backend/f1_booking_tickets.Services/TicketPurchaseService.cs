@@ -94,6 +94,12 @@ namespace f1_booking_tickets.Services
                     throw new InvalidOperationException($"Race day {raceDay.Name} is sold out");
             }
 
+            decimal exchangeRate = 1m;
+            if (normalizedCurrencyCode != "EUR")
+            {
+                exchangeRate = await _currencyService.GetExchangeRateAsync("EUR", normalizedCurrencyCode, cancellationToken);
+            }
+
             var currentYear = DateTime.UtcNow.Year;
             var randomString = Guid.NewGuid().ToString("N")[..8].ToUpper();
             var ticketCode = $"F1-{currentYear}-{randomString}";
@@ -124,18 +130,23 @@ namespace f1_booking_tickets.Services
 
                 var basePrice = raceDay.DayPrice * zone.PriceMultiplier;
                 var itemPrice = basePrice;
+                decimal itemDiscount = 0;
 
                 if (raceDay.Race.DiscountDeadline.HasValue && DateTime.UtcNow <= raceDay.Race.DiscountDeadline.Value)
                 {
-                    totalDiscount += itemPrice * 0.10m;
+                    itemDiscount += itemPrice * 0.10m;
                     itemPrice *= 0.90m;
                 }
 
                 if (usedPromoCode != null)
                 {
-                    totalDiscount += itemPrice * 0.05m;
+                    itemDiscount += itemPrice * 0.05m;
                     itemPrice *= 0.95m;
                 }
+
+                // Convert from EUR to selected currency
+                itemPrice *= exchangeRate;
+                itemDiscount *= exchangeRate;
 
                 var ticketRaceDay = new TicketRaceDay
                 {
@@ -147,6 +158,7 @@ namespace f1_booking_tickets.Services
 
                 ticket.TicketRaceDays.Add(ticketRaceDay);
                 totalPrice += itemPrice;
+                totalDiscount += itemDiscount;
 
                 raceDay.SoldTickets++;
             }

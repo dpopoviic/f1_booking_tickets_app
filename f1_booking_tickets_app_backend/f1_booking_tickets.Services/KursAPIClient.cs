@@ -30,13 +30,40 @@ namespace f1_booking_tickets.Services
             }
         }
 
+        public async Task<KursDailyRateApiResponse?> GetDailyRateAsync(string code, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"{_settings.BaseUrl}{code}/rates/today", cancellationToken);
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadFromJsonAsync<KursDailyRateApiResponse>(cancellationToken);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         public async Task<KursRateResponse?> GetKursRateAsync(string fromCode, string toCode, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"{_settings.BaseUrl}{fromCode}/kurs/{toCode}", cancellationToken);
-                response.EnsureSuccessStatusCode();
-                return await response.Content.ReadFromJsonAsync<KursRateResponse>(cancellationToken);
+
+                var fromRate = await GetDailyRateAsync(fromCode, cancellationToken);
+                var toRate = await GetDailyRateAsync(toCode, cancellationToken);
+
+                if (fromRate == null || toRate == null || toRate.ExchangeMiddle == 0)
+                    return null;
+
+                var crossRate = fromRate.ExchangeMiddle / toRate.ExchangeMiddle;
+
+                return new KursRateResponse
+                {
+                    CurrencyCode = toCode,
+                    ExchangeMiddleRate = crossRate,
+                    ExchangeRate = crossRate,
+                    Date = DateTime.UtcNow
+                };
             }
             catch
             {

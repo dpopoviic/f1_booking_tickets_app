@@ -6,5 +6,6 @@ namespace f1_booking_tickets.Services.If
     {
         Task<KursResponse?> GetKursAsync(string code, CancellationToken cancellationToken = default);
         Task<KursRateResponse?> GetKursRateAsync(string fromCode, string toCode, CancellationToken cancellationToken = default);
+        Task<KursDailyRateApiResponse?> GetDailyRateAsync(string code, CancellationToken cancellationToken = default);
     }
 }

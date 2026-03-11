@@ -48,7 +48,7 @@ namespace f1_booking_tickets_API.Controllers
             var rate = await _currencyService.GetExchangeRateAsync(from, to);
             var result = new { from, to, rate };
 
-            await _cacheService.SetRecord(cacheKey, result);
+            await _cacheService.SetRecord(cacheKey, result, TimeSpan.FromHours(24));
 
             return Ok(result);
         }
