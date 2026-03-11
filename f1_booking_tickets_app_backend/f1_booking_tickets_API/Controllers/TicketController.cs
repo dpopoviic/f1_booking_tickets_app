@@ -52,45 +52,6 @@ namespace f1_booking_tickets_API.Controllers
             }
         }
 
-        [HttpPost("purchase-async")]
-        public async Task<IActionResult> PurchaseAsync([FromBody] PurchaseTicketDTO dto)
-        {
-            try
-            {
-                var message = new TicketPurchaseRequestMessage
-                {
-                    FirstName = dto.FirstName,
-                    LastName = dto.LastName,
-                    Address = dto.Address,
-                    Country = dto.Country,
-                    PhoneNumber = dto.PhoneNumber,
-                    Email = dto.Email,
-                    EmailConfirmation = dto.EmailConfirmation,
-                    CurrencyCode = dto.CurrencyCode,
-                    PromoCode = dto.PromoCode,
-                    Items = dto.Items.Select(i => new TicketPurchaseItemMessage
-                    {
-                        RaceDayId = i.RaceDayId,
-                        ZoneId = i.ZoneId
-                    }).ToList()
-                };
-
-                var subscriber = _connectionMultiplexer.GetSubscriber();
-                await subscriber.PublishAsync(
-                    RedisChannel.Literal(RedisQueueNames.TicketPurchaseQueue),
-                    JsonSerializer.Serialize(message));
-
-                _logger.LogInformation("Ticket purchase request queued for {Email}", dto.Email);
-
-                return Accepted(new { message = "Ticket purchase request has been queued for processing" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error queueing ticket purchase request");
-                return StatusCode(500, "Failed to queue ticket purchase request");
-            }
-        }
-
         [HttpGet]
         public async Task<ActionResult<GetTicketDetailsDTO>> GetByCodeAndEmail([FromQuery] string ticketCode, [FromQuery] string email)
         {
@@ -134,36 +95,6 @@ namespace f1_booking_tickets_API.Controllers
             }
         }
 
-        [HttpPost("add-day-async")]
-        public async Task<IActionResult> AddRaceDayAsync([FromBody] ModifyTicketDTO dto)
-        {
-            try
-            {
-                var message = new TicketModificationRequestMessage
-                {
-                    TicketCode = dto.TicketCode,
-                    Email = dto.Email,
-                    RaceDayId = dto.RaceDayId,
-                    ZoneId = dto.ZoneId,
-                    ModificationType = "AddDay"
-                };
-
-                var subscriber = _connectionMultiplexer.GetSubscriber();
-                await subscriber.PublishAsync(
-                    RedisChannel.Literal(RedisQueueNames.TicketModificationQueue),
-                    JsonSerializer.Serialize(message));
-
-                _logger.LogInformation("Add race day request queued for ticket {TicketCode}", dto.TicketCode);
-
-                return Accepted(new { message = "Add race day request has been queued for processing" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error queueing add race day request");
-                return StatusCode(500, "Failed to queue add race day request");
-            }
-        }
-
         [HttpPost("remove-day")]
         public async Task<ActionResult<GetTicketDetailsDTO>> RemoveRaceDay([FromBody] ModifyTicketDTO dto)
         {
@@ -194,35 +125,6 @@ namespace f1_booking_tickets_API.Controllers
             catch (InvalidOperationException ex)
             {
                 return BadRequest(ex.Message);
-            }
-        }
-
-        [HttpPost("remove-day-async")]
-        public async Task<IActionResult> RemoveRaceDayAsync([FromBody] ModifyTicketDTO dto)
-        {
-            try
-            {
-                var message = new TicketModificationRequestMessage
-                {
-                    TicketCode = dto.TicketCode,
-                    Email = dto.Email,
-                    RaceDayId = dto.RaceDayId,
-                    ModificationType = "RemoveDay"
-                };
-
-                var subscriber = _connectionMultiplexer.GetSubscriber();
-                await subscriber.PublishAsync(
-                    RedisChannel.Literal(RedisQueueNames.TicketModificationQueue),
-                    JsonSerializer.Serialize(message));
-
-                _logger.LogInformation("Remove race day request queued for ticket {TicketCode}", dto.TicketCode);
-
-                return Accepted(new { message = "Remove race day request has been queued for processing" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error queueing remove race day request");
-                return StatusCode(500, "Failed to queue remove race day request");
             }
         }
 
