@@ -5,11 +5,25 @@ import { raceService } from '#/api/raceService'
 type SelectRaceProps = {
   selectedRace: Race | null
   setSelectedRace: (race: Race | null) => void
+  currency: string
+  exchangeRate: number
+}
+
+const formatPrice = (amount: number, currency: string) => {
+  const formattedAmount = amount.toFixed(2)
+
+  if (currency === 'EUR') {
+    return `€${formattedAmount}`
+  }
+
+  return `${currency} ${formattedAmount}`
 }
 
 export default function SelectRace({
   selectedRace,
   setSelectedRace,
+  currency,
+  exchangeRate,
 }: SelectRaceProps) {
   const [races, setRaces] = useState<Race[]>([])
   const [loading, setLoading] = useState(true)
@@ -96,6 +110,8 @@ export default function SelectRace({
       <div className="space-y-3">
         {races.map((race) => {
           const active = selectedRace?.raceId === race.raceId
+          const convertedBasePrice = race.basePrice * exchangeRate
+
           return (
             <div
               key={race.raceId}
@@ -121,7 +137,7 @@ export default function SelectRace({
               </div>
               <div className="text-right">
                 <div className="text-md font-bold text-white">
-                  from €{race.basePrice}
+                  from {formatPrice(convertedBasePrice, currency)}
                 </div>
               </div>
             </div>

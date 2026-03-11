@@ -304,11 +304,15 @@ export default function BuyTicket() {
       <SelectRace
         selectedRace={selectedRace}
         setSelectedRace={setSelectedRace}
+        currency={currency}
+        exchangeRate={exchangeRate}
       />
       <SelectRaceDay
         raceDays={raceDays}
         selectedDayIds={selectedDayIds}
         onToggleDay={handleToggleRaceDay}
+        currency={currency}
+        exchangeRate={exchangeRate}
         loading={loadingData}
       />
       <SelectSeat

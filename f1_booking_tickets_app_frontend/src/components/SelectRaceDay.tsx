@@ -4,13 +4,27 @@ type SelectDayProps = {
   raceDays: RaceDay[]
   selectedDayIds: number[]
   onToggleDay: (day: RaceDay) => void
+  currency: string
+  exchangeRate: number
   loading?: boolean
+}
+
+const formatPrice = (amount: number, currency: string) => {
+  const formattedAmount = amount.toFixed(2)
+
+  if (currency === 'EUR') {
+    return `€${formattedAmount}`
+  }
+
+  return `${currency} ${formattedAmount}`
 }
 
 export default function SelectRaceDay({
   raceDays,
   selectedDayIds,
   onToggleDay,
+  currency,
+  exchangeRate,
   loading = false,
 }: SelectDayProps) {
   if (loading) {
@@ -66,6 +80,8 @@ export default function SelectRaceDay({
             day: 'numeric',
             year: 'numeric',
           })
+          const convertedDayPrice = d.dayPrice * exchangeRate
+
           return (
             <div
               key={d.raceDayId}
@@ -93,7 +109,7 @@ export default function SelectRaceDay({
               </div>
               <div className="text-right">
                 <div className="text-md font-bold text-white">
-                  €{d.dayPrice}
+                  {formatPrice(convertedDayPrice, currency)}
                 </div>
                 <div className="text-xs text-accent-sage">{dateStr}</div>
               </div>
