@@ -170,11 +170,16 @@ namespace f1_booking_tickets.Services
             {
                 ticket.UsedPromoCodeId = usedPromoCode.PromoCodeId;
                 usedPromoCode.Status = PromoCodeStatus.Used;
-                usedPromoCode.UsedByTicketId = ticket.TicketId;
             }
 
             _context.Tickets.Add(ticket);
             await _context.SaveChangesAsync(cancellationToken);
+
+            if (usedPromoCode != null)
+            {
+                usedPromoCode.UsedByTicketId = ticket.TicketId;
+                await _context.SaveChangesAsync(cancellationToken);
+            }
 
             var generatedPromoCode = await _promoCodeService.GenerateForTicketAsync(ticket.TicketId, cancellationToken);
             ticket.CreatedPromoCode = generatedPromoCode;

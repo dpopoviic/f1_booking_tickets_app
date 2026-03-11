@@ -17,7 +17,6 @@ namespace f1_booking_tickets.Services
         public async Task<PromoCode?> GetByCodeAsync(string code, CancellationToken cancellationToken = default)
         {
             return await _context.PromoCodes
-                .AsNoTracking()
                 .FirstOrDefaultAsync(pc => pc.Code == code, cancellationToken);
         }
 
