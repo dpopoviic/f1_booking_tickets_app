@@ -3,6 +3,8 @@ export interface Race {
   name: string
   location: string
   basePrice: number
+  startDate?: string
+  discountDeadline?: string
 }
 
 export interface RaceDetails extends Race {
