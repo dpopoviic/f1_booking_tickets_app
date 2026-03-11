@@ -4,12 +4,10 @@ import {
   GearIcon,
   CalIcon,
   PinIcon2,
-  DollarIcon,
 } from '../../components/icons/Icons'
-import { TabEventInfo } from '../../components/TabEventInfo'
+import { TabRaces } from '../../components/TabRaces'
 import TabRaceDays from '../../components/TabRaceDay'
 import { TabZones } from '../../components/TabZones'
-import { TabDiscounts } from '../../components/TabDiscountsCurrencies'
 
 export const Route = createFileRoute('/admin/')({ component: App })
 
@@ -39,16 +37,15 @@ function Toast({ msg }: ToastProps) {
 }
 
 const TABS = [
-  { key: 'event', label: 'Event Info', icon: <GearIcon /> },
+  { key: 'races', label: 'Races', icon: <GearIcon /> },
   { key: 'days', label: 'Race Days', icon: <CalIcon /> },
   { key: 'zones', label: 'Zones', icon: <PinIcon2 /> },
-  { key: 'discounts', label: 'Discounts & Currencies', icon: <DollarIcon /> },
 ] as const
 
 type TabKey = (typeof TABS)[number]['key']
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabKey>('days')
+  const [activeTab, setActiveTab] = useState<TabKey>('races')
   const [toast, setToast] = useState<string | null>(null)
 
   const showToast = (msg: string) => {
@@ -92,10 +89,9 @@ export default function App() {
           className="border border-neutral-800 rounded-xl p-6"
           style={{ backgroundColor: '#121212' }}
         >
-          {activeTab === 'event' && <TabEventInfo showToast={showToast} />}
+          {activeTab === 'races' && <TabRaces showToast={showToast} />}
           {activeTab === 'days' && <TabRaceDays showToast={showToast} />}
           {activeTab === 'zones' && <TabZones showToast={showToast} />}
-          {activeTab === 'discounts' && <TabDiscounts showToast={showToast} />}
         </div>
       </div>
 

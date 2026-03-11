@@ -8,6 +8,8 @@ namespace f1_booking_tickets_API.DTOs.Race
         public string Name { get; set; } = null!;
         public string Location { get; set; } = null!;
         public decimal BasePrice { get; set; }
+        public DateTime? DiscountDeadline { get; set; }
+        public DateTime? StartDate { get; set; }
     }
     public static class GetRaceDTOExtensions
     {
@@ -18,7 +20,9 @@ namespace f1_booking_tickets_API.DTOs.Race
                 RaceId = race.RaceId,
                 Name = race.Name,
                 Location = race.Location,
-                BasePrice = race.BasePrice
+                BasePrice = race.BasePrice,
+                DiscountDeadline = race.DiscountDeadline,
+                StartDate = race.RaceDays.Count == 0 ? null : race.RaceDays.Min(rd => rd.Date)
             };
         }
     }

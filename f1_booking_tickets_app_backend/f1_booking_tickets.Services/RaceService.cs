@@ -17,6 +17,7 @@ namespace f1_booking_tickets.Services
         public async Task<IReadOnlyCollection<Race>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             return await _context.Races
+                .Include(r => r.RaceDays)
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
         }
